@@ -155,12 +155,32 @@
     font-size:12.5px;font-weight:700;max-width:230px;box-shadow:0 4px 0 rgba(0,0,0,.06);
   }
 
+  /* ---------- Rutas temáticas ---------- */
+  .route-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px;}
+  .route-card{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:16px 10px 12px;cursor:pointer;text-align:center;transition:transform .12s;box-shadow:0 3px 0 rgba(0,0,0,.25);}
+  .route-card:active{transform:scale(.95);}
+  .route-card.wide{grid-column:1/-1;display:flex;align-items:center;gap:12px;text-align:left;padding:14px 16px;}
+  .route-card.wide .route-emoji{font-size:34px;}
+  .route-card.wide b{font-size:15px;}
+  .route-card.wide .route-prog{font-size:11.5px;}
+  .route-card.wide .route-body{flex:1;}
+  .route-emoji{font-size:32px;}
+  .route-card b{font-size:13px;display:block;margin-top:6px;letter-spacing:-.2px;}
+  .route-prog{font-size:10.5px;color:var(--muted);font-weight:700;margin-top:3px;display:block;}
+  .route-bar{height:6px;background:#332C22;border-radius:4px;margin-top:8px;overflow:hidden;}
+  .route-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--gold));border-radius:4px;}
+  .route-head{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+  .route-head h2{font-size:19px;font-weight:900;letter-spacing:-.3px;}
+  .route-head p{font-size:12px;color:var(--muted);font-weight:600;margin-top:1px;}
+
   /* ---------- Settings & misc ---------- */
   .panel{background:#fff;border:2px solid var(--line);border-radius:20px;padding:18px;margin-top:14px;}
   .panel h3{font-size:15px;font-weight:900;margin-bottom:10px;}
-  .set-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1.5px solid #332C22;font-size:14px;font-weight:700;}
+  .set-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1.5px solid #332C22;font-size:14px;font-weight:700;}
+  .set-row>span{flex-shrink:1;}
   .set-row:last-child{border-bottom:none;}
-  select{font-family:inherit;font-weight:700;font-size:13px;padding:7px 10px;border-radius:10px;border:2px solid var(--line);background:#241F19;color:var(--ink);}
+  select{font-family:inherit;font-weight:700;font-size:12.5px;padding:7px 10px;border-radius:10px;border:2px solid var(--line);background:#241F19;color:var(--ink);max-width:58%;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+  option{background:#241F19;color:#F6F0E4;}
   .danger{background:var(--miss-bg)!important;color:var(--miss-tx)!important;border:2px solid var(--red)!important;}
   .banner{
     margin-top:14px;background:#E5F4FF;border:2px solid var(--blue);color:#0B6EA8;border-radius:16px;
@@ -188,9 +208,18 @@
   <div class="screen active" id="homeScreen">
     <div class="greet">
       <h1 id="greetTitle">¡Hola! 👋</h1>
-      <p>Tu ruta de inglés conversacional, un día a la vez.</p>
+      <p>Elige tu ruta de conversación y avanza a tu ritmo.</p>
     </div>
-    <div id="pathWrap"></div>
+    <div class="route-grid" id="routesWrap"></div>
+  </div>
+
+  <!-- RUTA (lecciones de un tema) -->
+  <div class="screen" id="routeScreen">
+    <div class="route-head">
+      <button class="icon-btn" id="btnBack">⬅️</button>
+      <div><h2 id="routeTitle"></h2><p id="routeDesc"></p></div>
+    </div>
+    <div id="routePathWrap"></div>
   </div>
 
   <!-- LESSON -->
@@ -435,7 +464,125 @@ const CURRICULUM = [
   {en:"What would you like to talk about today?",es:"¿De qué te gustaría hablar hoy?",tip:"Pregunta para abrir cualquier conversación."},
   {en:"This is just the beginning of my journey.",es:"Este es solo el comienzo de mi camino.",tip:"El día 31 lo escribes tú. 🐝",}]},
 ];
+
+/* =====================================================
+   RUTAS TEMÁTICAS — varias rutas de aprendizaje
+   conversacional por tema.
+===================================================== */
+const ROUTES = [
+ {id:"saludos", emoji:"👋", title:"Saludos y despedidas", desc:"Di hola y adiós como un nativo, en cualquier situación.", lessons:[
+  {emoji:"🙂", topic:"Saludos básicos", phrases:[
+   {en:"Hello! It's nice to meet you.", es:"¡Hola! Es un gusto conocerte.", tip:"'Nice to meet you' es LA frase de presentación."},
+   {en:"Hi there! How's it going?", es:"¡Hola! ¿Cómo te va?", tip:"'How's it going' es informal y muy común entre amigos."},
+   {en:"Hey! Long time no see.", es:"¡Oye! Cuánto tiempo sin verte.", tip:"'Long time no see' = cuánto tiempo. Dilo con alegría."},
+   {en:"Good to see you again.", es:"Qué bueno verte de nuevo.", tip:"Perfecta para reencontrarte con alguien."}]},
+  {emoji:"🕐", topic:"Saludos según la hora", phrases:[
+   {en:"Good morning! Did you sleep well?", es:"¡Buenos días! ¿Dormiste bien?", tip:"'Good morning' solo por la mañana."},
+   {en:"Good afternoon. How is your day going?", es:"Buenas tardes. ¿Cómo va tu día?", tip:"Úsala desde el mediodía."},
+   {en:"Good evening. It's great to see you.", es:"Buenas noches (al llegar). Qué gusto verte.", tip:"'Good evening' se dice al llegar de noche."},
+   {en:"Good night. Sleep well!", es:"Buenas noches (al despedirse). ¡Que duermas bien!", tip:"'Good night' es solo para despedirse, nunca para saludar."}]},
+  {emoji:"💬", topic:"¿Cómo estás?", phrases:[
+   {en:"How are you? I'm great, thanks!", es:"¿Cómo estás? ¡Estoy genial, gracias!", tip:"La respuesta corta es la más natural."},
+   {en:"How's everything on your side?", es:"¿Cómo va todo por tu lado?", tip:"Variante cálida y diferente al clásico."},
+   {en:"What's new with you?", es:"¿Qué hay de nuevo contigo?", tip:"Para conversaciones con amigos."},
+   {en:"I'm doing pretty well. And yourself?", es:"Me va bastante bien. ¿Y a ti?", tip:"'And yourself' suena elegante y atento."}]},
+  {emoji:"👋", topic:"Despedidas", phrases:[
+   {en:"See you later! Take care.", es:"¡Nos vemos luego! Cuídate.", tip:"'Take care' = cuídate, siempre amable."},
+   {en:"See you tomorrow. Have a good one!", es:"Nos vemos mañana. ¡Que estés bien!", tip:"'Have a good one' sirve para cualquier momento del día."},
+   {en:"It was great catching up with you.", es:"Fue genial ponernos al día.", tip:"'Catch up' = ponerse al día."},
+   {en:"Bye for now. Talk to you soon!", es:"Adiós por ahora. ¡Hablamos pronto!", tip:"Cierre cálido para chats y llamadas."}]}
+ ]},
+ {id:"numeros", emoji:"🔢", title:"Números", desc:"Cuenta, negocia precios y maneja la hora con confianza.", lessons:[
+  {emoji:"1️⃣", topic:"Números básicos", phrases:[
+   {en:"I have three cats at home.", es:"Tengo tres gatos en casa.", tip:"'Cats at home' — escucha la 'a' suave de 'cats'."},
+   {en:"There are seven days in a week.", es:"Hay siete días en una semana.", tip:"'Days in a week' — fíjate en la 'in'."},
+   {en:"I ate five cookies. Oops!", es:"Me comí cinco galletas. ¡Ups!", tip:"Números + 'oops' = divertido y natural."},
+   {en:"This gift is for you. It's ten dollars.", es:"Este regalo es para ti. Cuesta diez dólares.", tip:"Precios simples: 'It's ten dollars'."}]},
+  {emoji:"🔟", topic:"Números grandes", phrases:[
+   {en:"My house number is twenty-four.", es:"El número de mi casa es el veinticuatro.", tip:"Los números compuestos llevan guion: 'twenty-four'."},
+   {en:"About fifty people came to the party.", es:"Unas cincuenta personas vinieron a la fiesta.", tip:"'About' = aproximadamente."},
+   {en:"The trip costs one hundred dollars.", es:"El viaje cuesta cien dólares.", tip:"Siempre 'one hundred', no 'a hundred' en lo formal."},
+   {en:"She is thirty years old.", es:"Ella tiene treinta años.", tip:"En inglés uno 'is' años: 'is thirty years old'."}]},
+  {emoji:"💵", topic:"Precios y compras", phrases:[
+   {en:"How much is this shirt? It's twelve dollars.", es:"¿Cuánto cuesta esta camisa? Cuesta doce dólares.", tip:"'How much is' + respuesta directa del precio."},
+   {en:"That's too expensive for me.", es:"Eso es muy caro para mí.", tip:"'Too expensive' = demasiado caro."},
+   {en:"Can you give me a discount?", es:"¿Me puedes dar un descuento?", tip:"Pídelo con sonrisa: funciona mejor."},
+   {en:"I only have fifteen dollars with me.", es:"Solo tengo quince dólares conmigo.", tip:"'With me' = conmigo."}]},
+  {emoji:"🕒", topic:"Hora, edad y teléfono", phrases:[
+   {en:"What time is it? It's three o'clock.", es:"¿Qué hora es? Son las tres.", tip:"La respuesta clásica de la hora."},
+   {en:"My number is five, five, five, one, two, three.", es:"Mi número es cinco cinco cinco, uno dos tres.", tip:"Dictar números en voz alta es habilidad clave."},
+   {en:"How old are you? I'm twenty-eight.", es:"¿Cuántos años tienes? Tengo veintiocho.", tip:"'How old are you' = la pregunta de edad."},
+   {en:"The bus arrives at eight thirty.", es:"El autobús llega a las ocho y media.", tip:"'Eight thirty' = las ocho treinta, sin necesidad de decir 'minutes'."}]}
+ ]},
+ {id:"colores", emoji:"🎨", title:"Colores", desc:"Describe el mundo a tu alrededor con todos los colores.", lessons:[
+  {emoji:"🌈", topic:"Colores básicos", phrases:[
+   {en:"My favorite color is blue.", es:"Mi color favorito es el azul.", tip:"'Favorite color' — pregunta clave para conocer gente."},
+   {en:"The sky is so blue today.", es:"El cielo está tan azul hoy.", tip:"'So + adjetivo' = tan..."},
+   {en:"I have a red car and a black bike.", es:"Tengo un carro rojo y una bicicleta negra.", tip:"En inglés el adjetivo va ANTES y no tiene género."},
+   {en:"Do you like this green shirt?", es:"¿Te gusta esta camisa verde?", tip:"Orden: this + color + sustantivo."}]},
+  {emoji:"👗", topic:"Ropa y colores", phrases:[
+   {en:"She is wearing a white dress.", es:"Ella lleva puesto un vestido blanco.", tip:"'Is wearing' = llevar puesto (ahora)."},
+   {en:"His jacket is dark gray.", es:"Su chaqueta es gris oscuro.", tip:"'Dark gray' = gris oscuro."},
+   {en:"These shoes are brown, not black.", es:"Estos zapatos son cafés, no negros.", tip:"'Brown' = café (el color)."},
+   {en:"I love your pink hat!", es:"¡Me encanta tu sombrero rosa!", tip:"'Pink' = rosa; el color no cambia en plural."}]},
+  {emoji:"🌅", topic:"Describiendo con colores", phrases:[
+   {en:"The sunset is orange and purple.", es:"El atardecer es naranja y morado.", tip:"'Purple' = morado."},
+   {en:"Yellow flowers grow in my garden.", es:"Flores amarillas crecen en mi jardín.", tip:"'Grow' = crecer."},
+   {en:"The sea looks deep blue today.", es:"El mar se ve azul intenso hoy.", tip:"'Looks' + color para describir apariencias."},
+   {en:"Light blue is such a calm color.", es:"El azul claro es un color tan calmado.", tip:"'Light blue' = azul claro; 'such a' = tan."}]},
+  {emoji:"🍂", topic:"Colores en la naturaleza", phrases:[
+   {en:"The leaves turn red and orange in fall.", es:"Las hojas se vuelven rojas y naranjas en otoño.", tip:"'Turn' = volverse (cambio de color)."},
+   {en:"The rainbow has seven colors.", es:"El arcoíris tiene siete colores.", tip:"'Rainbow' = arcoíris."},
+   {en:"Fresh snow is pure white.", es:"La nieve fresca es blanca pura.", tip:"'Pure white' = blanco puro."},
+   {en:"The grass is green after the rain.", es:"El pasto está verde después de la lluvia.", tip:"'Grass' = pasto/cesped."}]}
+ ]},
+ {id:"estaciones", emoji:"🌦️", title:"Estaciones del año", desc:"Habla del clima y las actividades de cada temporada.", lessons:[
+  {emoji:"📅", topic:"Las cuatro estaciones", phrases:[
+   {en:"There are four seasons in a year.", es:"Hay cuatro estaciones en un año.", tip:"'Seasons' = estaciones del año."},
+   {en:"Spring is warm and full of flowers.", es:"La primavera es cálida y llena de flores.", tip:"'Spring' = primavera."},
+   {en:"Summer is the hottest season.", es:"El verano es la estación más calurosa.", tip:"'Hottest' = la más calurosa (superlativo)."},
+   {en:"I love the colors of autumn.", es:"Me encantan los colores del otoño.", tip:"'Autumn' = otoño; en EE. UU. también dicen 'fall'."}]},
+  {emoji:"🌸", topic:"Primavera y verano", phrases:[
+   {en:"In spring, everything comes back to life.", es:"En primavera, todo vuelve a la vida.", tip:"Frase poética y muy usada."},
+   {en:"Let's have a picnic this summer.", es:"Hagamos un picnic este verano.", tip:"'Have a picnic' = hacer un picnic."},
+   {en:"The beach is perfect in July.", es:"La playa es perfecta en julio.", tip:"Los meses van con mayúscula en inglés."},
+   {en:"It's too hot. Let's swim in the pool.", es:"Hace demasiado calor. Nadémos en la alberca.", tip:"'Too hot' + sugerencia con 'let's'."}]},
+  {emoji:"🍁", topic:"Otoño e invierno", phrases:[
+   {en:"Fall is my favorite season.", es:"El otoño es mi estación favorita.", tip:"'Fall' es la palabra americana para otoño."},
+   {en:"The leaves fall from the trees.", es:"Las hojas caen de los árboles.", tip:"'Fall' también significa caer."},
+   {en:"Winter is cold, but I love the snow.", es:"El invierno es frío, pero amo la nieve.", tip:"Contraste elegante con 'but'."},
+   {en:"I wear a coat and scarf in winter.", es:"Uso abrigo y bufanda en invierno.", tip:"'Coat' = abrigo; 'scarf' = bufanda."}]},
+  {emoji:"⛷️", topic:"Actividades por temporada", phrases:[
+   {en:"What do you do in the summer?", es:"¿Qué haces en verano?", tip:"Pregunta clave para cualquier conversación."},
+   {en:"We ski in winter and hike in spring.", es:"Esquiamos en invierno y caminamos en primavera.", tip:"'Ski' = esquiar; 'hike' = hacer senderismo."},
+   {en:"Spring cleaning is a tradition here.", es:"La limpieza de primavera es tradición aquí.", tip:"Tradiciones con 'is a tradition'."},
+   {en:"Each season has its own beauty.", es:"Cada estación tiene su propia belleza.", tip:"Cierre perfecto para el tema."}]}
+ ]},
+ {id:"dias", emoji:"🌗", title:"Mañana, tarde y noche", desc:"Cuenta tu rutina completa, de la mañana a la noche.", lessons:[
+  {emoji:"🌅", topic:"En la mañana", phrases:[
+   {en:"I wake up early, around six thirty.", es:"Me despierto temprano, como a las seis y media.", tip:"'Around' = aproximadamente."},
+   {en:"Mornings are for coffee and quiet.", es:"Las mañanas son para el café y la calma.", tip:"Estructura poética y simple: 'are for'."},
+   {en:"I brush my teeth and wash my face.", es:"Me cepillo los dientes y me lavo la cara.", tip:"Rutina con 'brush' (cepillar) y 'wash' (lavar)."},
+   {en:"The early bird catches the worm.", es:"El madrugador atrapa al gusano.", tip:"Proverbio: madrugar trae recompensas."}]},
+  {emoji:"☀️", topic:"En la tarde", phrases:[
+   {en:"Good afternoon! How's your day so far?", es:"¡Buenas tardes! ¿Cómo va tu día hasta ahora?", tip:"'So far' = hasta ahora."},
+   {en:"I work from two to six in the afternoon.", es:"Trabajo de dos a seis de la tarde.", tip:"Horarios con 'from... to'."},
+   {en:"Let's have lunch at one o'clock.", es:"Comamos a la una.", tip:"'Have lunch' = comer (al mediodía)."},
+   {en:"The afternoon sun feels warm and lazy.", es:"El sol de la tarde se siente cálido y perezoso.", tip:"'Feels' = se siente."}]},
+  {emoji:"🌙", topic:"En la noche", phrases:[
+   {en:"Good evening! What a long day, right?", es:"¡Buenas noches! Qué día tan largo, ¿verdad?", tip:"'What a long day' = expresión de todos los días."},
+   {en:"I cook dinner around eight at night.", es:"Cocino la cena como a las ocho de la noche.", tip:"'Dinner' = cena; 'at night' = de noche."},
+   {en:"We watch a movie before bed.", es:"Vemos una película antes de dormir.", tip:"'Before bed' = antes de acostarse."},
+   {en:"The city lights look beautiful at night.", es:"Las luces de la ciudad se ven hermosas de noche.", tip:"'Look beautiful' = se ven hermosas."}]},
+  {emoji:"📖", topic:"Mi día completo", phrases:[
+   {en:"My day starts slow and gets busy.", es:"Mi día empieza lento y se pone ocupado.", tip:"'Gets busy' = se pone ocupado."},
+   {en:"I take a walk after lunch every day.", es:"Doy un paseo después de comer cada día.", tip:"'Take a walk' = dar un paseo."},
+   {en:"At night, I read a few pages.", es:"En la noche, leo algunas páginas.", tip:"'A few' = algunos/as."},
+   {en:"Every day is a new chance to learn.", es:"Cada día es una nueva oportunidad para aprender.", tip:"Tu mantra para cerrar la ruta, Gaby. 🐝"}]}
+ ]},
+ {id:"cotidiano", emoji:"🏙️", title:"Vida cotidiana", desc:"La ruta grande: 28 días de conversaciones reales, paso a paso.", lessons: CURRICULUM},
+];
 </script>
-<script src="app.js"></script>
+<script src="app.js?v=4"></script>
 </body>
 </html>

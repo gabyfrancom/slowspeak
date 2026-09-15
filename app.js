@@ -6,22 +6,34 @@
 /* ---------- Estado persistente ---------- */
 const STORE_KEY = 'slowspeak_v1';
 const defaultState = () => ({
-  day: 0,            // índice del próximo día a completar
+  v: 2,
   xp: 0,
   streak: 0,
   bestStreak: 0,
   lastPractice: null, // 'YYYY-MM-DD'
   hearts: 5,
-  completed: {},      // {dayIndex: {acc, xp, perfect, words:{word:ok}}}
+  routes: {},         // {routeId: {cur: 0, done: {lessonIdx: result}}}
   settings: { rate: 0.7, voiceURI: null, defRate: 0.7 }
 });
+function emptyRoute() { return { cur: 0, done: {} }; }
 let state = loadState();
 function loadState() {
+  let s;
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    if (raw) return Object.assign(defaultState(), JSON.parse(raw));
-  } catch (e) {}
-  return defaultState();
+    s = raw ? Object.assign(defaultState(), JSON.parse(raw)) : defaultState();
+  } catch (e) { s = defaultState(); }
+  // migración v1 → v2 (progreso del formato antiguo)
+  if (s.v !== 2) {
+    const r = emptyRoute();
+    r.cur = s.day || 0;
+    Object.entries(s.completed || {}).forEach(([k, v]) => { r.done[k] = v; });
+    s.routes = { cotidiano: r };
+    s.v = 2;
+  }
+  ROUTES.forEach(rt => { if (!s.routes[rt.id]) s.routes[rt.id] = emptyRoute(); });
+  localStorage.setItem(STORE_KEY, JSON.stringify(s));
+  return s;
 }
 function saveState() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
 
@@ -200,8 +212,13 @@ function confetti(n = 30) {
 }
 
 /* =====================================================
-   PANTALLA HOME — ruta de días
+   PANTALLA HOME — varias rutas temáticas
 ===================================================== */
+function routeStats(rt) {
+  const st = state.routes[rt.id];
+  const done = Object.keys(st.done).length;
+  return { st, done, pct: Math.round(done / rt.lessons.length * 100) };
+}
 function renderHome() {
   $('streakTxt').textContent = state.streak;
   $('xpTxt').textContent = state.xp;
@@ -209,50 +226,80 @@ function renderHome() {
   const h = new Date().getHours();
   $('greetTitle').textContent = (h < 12 ? '¡Buenos días' : h < 19 ? '¡Buenas tardes' : '¡Buenas noches') + ', Gaby! 🐝';
 
-  const wrap = $('pathWrap');
+  const wrap = $('routesWrap');
   wrap.innerHTML = '';
-  const total = CURRICULUM.length;
+  ROUTES.forEach(rt => {
+    const { done, pct } = routeStats(rt);
+    const card = document.createElement('div');
+    const wide = rt.id === 'cotidiano' ? ' wide' : '';
+    card.className = 'route-card' + wide;
+    const body = `<div class="route-emoji">${rt.emoji}</div>
+      <div class="route-body"><b>${rt.title}</b>
+      <span class="route-prog">${done}/${rt.lessons.length} lecciones · ${pct}%</span>
+      <div class="route-bar"><div class="route-fill" style="width:${pct}%"></div></div></div>`;
+    card.innerHTML = wide ? body + `<div class="day-state">${pct === 100 ? '👑' : '▶️'}</div>` : body;
+    card.onclick = () => showRoute(rt.id);
+    wrap.appendChild(card);
+  });
+}
 
-  // tarjeta de "lección de hoy"
-  if (state.day < total) {
-    const d = CURRICULUM[state.day];
+/* =====================================================
+   PANTALLA RUTA — lecciones de un tema
+===================================================== */
+let currentRoute = null;
+function showRoute(routeId) {
+  const rt = ROUTES.find(r => r.id === routeId);
+  currentRoute = routeId;
+  const { st } = routeStats(rt);
+  $('routeTitle').textContent = rt.emoji + ' ' + rt.title;
+  $('routeDesc').textContent = rt.desc;
+
+  const wrap = $('routePathWrap');
+  wrap.innerHTML = '';
+
+  // tarjeta de la lección actual
+  if (st.cur < rt.lessons.length) {
+    const d = rt.lessons[st.cur];
     const card = document.createElement('div');
     card.className = 'day-card';
-    const doneCount = Object.keys(state.completed).length;
+    const prefix = rt.id === 'cotidiano' ? `Día ${st.cur+1}: ` : `Lección ${st.cur+1}: `;
     card.innerHTML = `<div class="day-emoji">${d.emoji}</div>
-      <div class="day-info"><b>Día ${state.day+1}: ${d.topic}</b>
-      <span>${d.phrases.length} frases conversacionales · ${doneCount}/${total} días completados</span></div>
+      <div class="day-info"><b>${prefix}${d.topic}</b>
+      <span>${d.phrases.length} frases conversacionales</span></div>
       <div class="day-state">▶️</div>`;
-    card.onclick = () => startLesson(state.day);
+    card.onclick = () => startLesson(routeId, st.cur);
     wrap.appendChild(card);
   } else {
     const card = document.createElement('div');
     card.className = 'day-card';
     card.innerHTML = `<div class="day-emoji">🏆</div>
-      <div class="day-info"><b>¡Completaste los 30 días!</b><span>Revisa tus lecciones o empieza de nuevo</span></div>
+      <div class="day-info"><b>¡Ruta completada!</b><span>Dominaste todas las lecciones de ${rt.title}</span></div>
       <div class="day-state">👑</div>`;
-    card.onclick = () => { state.day = 0; saveState(); renderHome(); };
+    card.onclick = () => showScreen('homeScreen');
     wrap.appendChild(card);
   }
 
-  CURRICULUM.forEach((d, i) => {
+  rt.lessons.forEach((d, i) => {
     if (i > 0) {
       const c = document.createElement('div');
       c.className = 'connector';
       wrap.appendChild(c);
     }
     const node = document.createElement('div');
-    const done = !!state.completed[i];
-    node.className = 'node ' + (done ? 'done star' : (i === state.day ? 'current' : (i < state.day ? 'done' : 'locked')));
+    const done = !!st.done[i];
+    const playable = done || i <= st.cur;
+    node.className = 'node ' + (done ? 'done star' : (i === st.cur ? 'current' : (playable ? 'done' : 'locked')));
     node.innerHTML = `${i+1}<span class="lbl">${done ? '✓' : d.emoji}</span>`;
-    node.title = `Día ${i+1}: ${d.topic}`;
+    node.title = d.topic;
     node.onclick = () => {
-      if (done || i === state.day) startLesson(i);
-      else mascotSay(`🔒 Completa el Día ${state.day+1} para desbloquear este. ¡Tú puedes!`);
+      if (playable) startLesson(routeId, i);
+      else mascotSay(`🔒 Completa la lección ${st.cur+1} para desbloquear esta. ¡Tú puedes!`);
     };
     wrap.appendChild(node);
   });
+  showScreen('routeScreen');
 }
+$('btnBack').addEventListener('click', () => { renderHome(); showScreen('homeScreen'); });
 
 /* =====================================================
    TRANSCRIPCIÓN FONÉTICA (aproximación amigable)
@@ -270,23 +317,26 @@ window.__buildPron = buildPron;
    PANTALLA LECCIÓN
 ===================================================== */
 const lesson = { day: 0, idx: 0, tries: 0, results: [], awaitingNext: false };
-function startLesson(dayIdx) {
-  lesson.day = dayIdx; lesson.idx = 0; lesson.tries = 0;
-  lesson.results = [];
+function startLesson(routeId, lessonIdx) {
+  const rt = ROUTES.find(r => r.id === routeId);
+  lesson.routeId = routeId; lesson.data = rt.lessons[lessonIdx];
+  lesson.idx = 0; lesson.tries = 0; lesson.results = [];
   // velocidad: recordar ajuste del usuario
   $('speedRange').value = state.settings.defRate;
   updateSpeedLabel();
   showScreen('lessonScreen');
   renderPhrase();
-  mascotSay(`Día ${dayIdx+1}: ${CURRICULUM[dayIdx].topic}. Escucha despacio y repite conmigo 🍯`);
+  const label = routeId === 'cotidiano' ? `Día ${lessonIdx+1}` : `Lección ${lessonIdx+1}`;
+  mascotSay(`${label}: ${lesson.data.topic}. Escucha despacio y repite conmigo 🍯`);
 }
 function renderPhrase() {
-  const d = CURRICULUM[lesson.day];
+  const d = lesson.data;
   const p = d.phrases[lesson.idx];
   lesson.awaitingNext = false;
   $('progressFill').style.width = (lesson.idx / d.phrases.length * 100) + '%';
   $('phraseEn').innerHTML = p.en.split(/(\s+)/).map(tok =>
     /^\s+$/.test(tok) || tok === '' ? tok : `<span class="word">${tok}</span>`).join('');
+  $('phrasePr').textContent = '🗣️ ' + buildPron(p.en);
   $('phraseEs').textContent = p.es;
   if (p.tip) { $('tipBox').style.display = 'flex'; $('tipTxt').textContent = p.tip; }
   else $('tipBox').style.display = 'none';
@@ -305,7 +355,7 @@ function updateSpeedLabel() {
 
 $('speedRange').addEventListener('input', updateSpeedLabel);
 $('btnListen').addEventListener('click', () => {
-  const p = CURRICULUM[lesson.day].phrases[lesson.idx];
+  const p = lesson.data.phrases[lesson.idx];
   speak(p.en);
 });
 
@@ -323,7 +373,7 @@ $('btnSpeak').addEventListener('click', () => {
   startListening(alts => {
     btn.innerHTML = '🎤 Repetir';
     btn.classList.remove('mic-live');
-    const p = CURRICULUM[lesson.day].phrases[lesson.idx];
+    const p = lesson.data.phrases[lesson.idx];
     // elegir la alternativa con mayor puntuación
     let best = null, bestAcc = -1;
     alts.forEach(t => {
@@ -422,7 +472,7 @@ function pickEncourage() {
 }
 
 $('btnContinue').addEventListener('click', () => {
-  const d = CURRICULUM[lesson.day];
+  const d = lesson.data;
   lesson.idx++;
   lesson.tries = 0;
   if (lesson.idx >= d.phrases.length) finishLesson();
@@ -437,12 +487,16 @@ function finishLesson() {
   const missedAll = [...new Set(rs.flatMap(r => r.missed))];
 
   updateStreak();
-  // guardar resultado del día (guarda el mejor)
-  const prev = state.completed[lesson.day];
+  // guardar resultado de la lección (guarda el mejor intento)
+  const rt = ROUTES.find(r => r.id === lesson.routeId);
+  const lst = rt.lessons;
+  const lessonPos = lst.indexOf(lesson.data);
+  const st = state.routes[lesson.routeId];
+  const prev = st.done[lessonPos];
   if (!prev || avgAcc > prev.acc) {
-    state.completed[lesson.day] = { acc: avgAcc, perfect: perfectCount, missed: missedAll };
+    st.done[lessonPos] = { acc: avgAcc, perfect: perfectCount, missed: missedAll };
   }
-  if (lesson.day === state.day) state.day++;
+  if (lessonPos === st.cur) st.cur++;
   state.hearts = 5;
   saveState();
 
@@ -454,7 +508,7 @@ function finishLesson() {
 
   const chips = $('wordChips');
   chips.innerHTML = '';
-  const words = [...new Set(CURRICULUM[lesson.day].phrases.flatMap(p => normalizeWords(p.en)))];
+  const words = [...new Set(lst.flatMap(l => l.phrases).flatMap(p => normalizeWords(p.en)))];
   if (!missedAll.length) {
     chips.innerHTML = '<span class="wchip ok">¡Todas perfectas! 🌟</span>';
   } else {
@@ -468,11 +522,13 @@ function finishLesson() {
   }
   showScreen('resultScreen');
   if (avgAcc >= 0.7) confetti(40);
-  mascotSay(state.streak > 1 ? `¡Racha de ${state.streak} días! 🔥` : '¡Día 1 hecho! Vuelve mañana 🔥');
+  const rDone = Object.keys(st.done).length;
+  mascotSay(rDone >= lst.length ? `¡Ruta ${rt.title} completada! Eres increíble 👑`
+    : state.streak > 1 ? `¡Racha de ${state.streak} días! 🔥` : '¡Primera lección hecha! Vuelve mañana 🔥');
 }
 
-$('btnFinish').addEventListener('click', () => { renderHome(); showScreen('homeScreen'); });
-$('btnReplay').addEventListener('click', () => startLesson(lesson.day));
+$('btnFinish').addEventListener('click', () => { showRoute(lesson.routeId); });
+$('btnReplay').addEventListener('click', () => startLesson(lesson.routeId, ROUTES.find(r => r.id === lesson.routeId).lessons.indexOf(lesson.data)));
 
 /* =====================================================
    SETTINGS
