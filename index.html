@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SlowSpeak — Inglés conversacional paso a paso</title>
+<style>
+  :root{
+    --bg:#171310; --ink:#F6F0E4; --muted:#A99D8C;
+    --brand:#FF8A3D; --brand-dark:#E8722A;
+    --green:#6FCF03; --green-dark:#4E9203;
+    --blue:#22B5F5; --blue-dark:#1899D6;
+    --red:#FF5C5C; --red-dark:#D63A3A;
+    --gold:#FFC800; --purple:#A560E8;
+    --card:#241F19; --line:#3D352A;
+    --pron:#B9A7F7;
+    --ok-bg:rgba(111,207,3,.14); --ok-tx:#A9E863;
+    --miss-bg:rgba(255,92,92,.14); --miss-tx:#FF9C9C;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+    background:#0E0C0A; color:var(--ink);
+    overflow:hidden;
+  }
+  #app{max-width:520px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;position:relative;background:var(--bg);box-shadow:0 0 50px rgba(0,0,0,.5);}
+
+  /* ---------- Top bar ---------- */
+  #topbar{
+    display:flex;align-items:center;gap:10px;padding:14px 16px 10px;
+    background:linear-gradient(180deg,#2A231A,#171310);border-bottom:2px solid var(--line);
+    flex-shrink:0;z-index:5;
+  }
+  .stat{display:flex;align-items:center;gap:5px;font-weight:800;font-size:15px;color:var(--ink);}
+  .stat .ico{font-size:18px;}
+  .stat small{font-weight:600;color:var(--muted);font-size:11px;}
+  #streakTxt{color:#FF9600;} #xpTxt{color:var(--blue);} #heartTxt{color:var(--red);}
+  #topbar .spacer{flex:1;}
+  .icon-btn{
+    width:38px;height:38px;border-radius:12px;border:2px solid var(--line);background:#fff;
+    font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:transform .1s;
+  }
+  .icon-btn:active{transform:scale(.9);}
+
+  /* ---------- Screens ---------- */
+  .screen{flex:1;overflow-y:auto;padding:18px 18px 110px;display:none;animation:fadeIn .3s ease;}
+  .screen.active{display:block;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  /* ---------- Home / path ---------- */
+  .greet h1{font-size:22px;font-weight:900;letter-spacing:-.3px;}
+  .greet p{color:var(--muted);font-size:13px;margin-top:2px;font-weight:600;}
+  #pathWrap{margin-top:18px;display:flex;flex-direction:column;align-items:center;gap:0;padding-bottom:20px;}
+  .node{
+    width:86px;height:86px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-weight:900;color:#fff;font-size:22px;cursor:pointer;position:relative;
+    border:4px solid #fff;box-shadow:0 6px 0 rgba(0,0,0,.14);transition:transform .12s;user-select:none;
+  }
+  .node:active{transform:scale(.92);}
+  .node .lbl{font-size:10px;font-weight:700;opacity:.95;letter-spacing:.4px;}
+  .node.done{background:var(--green);box-shadow:0 6px 0 var(--green-dark);}
+  .node.locked{background:#D8CFC0;box-shadow:0 6px 0 #C2B8A8;cursor:not-allowed;}
+  .node.current{background:var(--brand);box-shadow:0 6px 0 var(--brand-dark);animation:pulse 2s infinite;}
+  .node.star::after{content:'★';position:absolute;top:-14px;right:-6px;font-size:22px;color:var(--gold);text-shadow:0 2px 0 #D89E00;}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+  .connector{width:6px;height:34px;background:#3D352A;border-radius:3px;}
+  .day-card{
+    width:100%;background:var(--card);border:2px solid var(--line);border-radius:20px;padding:14px 16px;
+    display:flex;align-items:center;gap:12px;margin-top:10px;cursor:pointer;transition:transform .12s;
+  }
+  .day-card:active{transform:scale(.97);}
+  .day-emoji{font-size:30px;}
+  .day-info{flex:1;}
+  .day-info b{font-size:14px;display:block;}
+  .day-info span{font-size:12px;color:var(--muted);font-weight:600;}
+  .day-state{font-size:20px;}
+
+  /* ---------- Lesson ---------- */
+  #progressTrack{height:14px;background:#EFE5D2;border-radius:8px;overflow:hidden;margin-bottom:14px;border:2px solid var(--line);}
+  #progressFill{height:100%;width:0%;background:linear-gradient(90deg,var(--brand),var(--gold));border-radius:8px;transition:width .4s ease;}
+  .lesson-card{
+    background:var(--card);border:2px solid var(--line);border-radius:24px;padding:22px 18px;text-align:center;
+    box-shadow:0 4px 0 rgba(0,0,0,.05);
+  }
+  .phrase-en{font-size:22px;font-weight:900;line-height:1.35;letter-spacing:-.2px;}
+  .phrase-en .word{border-radius:6px;padding:0 2px;transition:background .3s;}
+  .phrase-pron{margin-top:8px;font-size:15.5px;font-weight:700;color:var(--pron);letter-spacing:.5px;font-style:italic;}
+  .phrase-es{color:var(--muted);font-size:14px;margin-top:6px;font-weight:600;}
+  .tip{
+    margin-top:14px;background:#33290F;border:1.5px dashed #8A6A1F;color:#E8C96B;font-size:12.5px;
+    border-radius:14px;padding:9px 12px;font-weight:600;text-align:left;display:flex;gap:8px;
+  }
+  .btn-row{display:flex;gap:10px;margin-top:18px;}
+  .btn{
+    flex:1;border:none;border-radius:16px;padding:14px 10px;font-size:15px;font-weight:900;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .1s, filter .15s;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);color:#fff;font-family:inherit;
+  }
+  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.15);}
+  .btn:disabled{filter:grayscale(.7) opacity(.6);cursor:not-allowed;}
+  .btn-listen{background:var(--blue);} .btn-speak{background:var(--green);} .btn-skip{background:#B7AB9B;}
+  .btn-check{background:var(--green);} .btn-continue{background:var(--blue);width:100%;margin-top:16px;}
+  .btn-ghost{background:#fff;color:var(--blue);border:2px solid var(--line);box-shadow:0 3px 0 var(--line);}
+  .mic-live{animation:micPulse 1.2s infinite;}
+  @keyframes micPulse{0%,100%{box-shadow:0 4px 0 rgba(0,0,0,.15),0 0 0 0 rgba(88,204,2,.5)}50%{box-shadow:0 4px 0 rgba(0,0,0,.15),0 0 0 14px rgba(88,204,2,0)}}
+  #feedback{
+    margin-top:16px;border-radius:18px;padding:14px 16px;display:none;font-size:14px;font-weight:700;text-align:left;
+    animation:fadeIn .25s ease;
+  }
+  #feedback.show{display:block;}
+  #feedback.good{background:var(--ok-bg);border:2px solid var(--green);color:var(--ok-tx);}
+  #feedback.mid{background:#33290F;border:2px solid var(--gold);color:#E8C96B;}
+  #feedback.bad{background:var(--miss-bg);border:2px solid var(--red);color:var(--miss-tx);}
+  #heardTxt{font-size:13px;color:var(--muted);font-weight:600;margin-top:6px;font-style:italic;}
+  .speed-row{display:flex;align-items:center;gap:10px;margin-top:14px;background:#FBF4E4;border-radius:14px;padding:10px 14px;border:2px solid var(--line);}
+  .speed-row label{font-size:12px;font-weight:800;color:var(--muted);white-space:nowrap;}
+  input[type=range]{flex:1;accent-color:var(--brand);height:22px;}
+  #speedVal{font-size:12px;font-weight:900;color:var(--brand);min-width:44px;text-align:right;}
+
+  /* ---------- Result ---------- */
+  #resultScreen .big-emoji{font-size:70px;text-align:center;margin-top:20px;animation:bounce .8s ease;}
+  @keyframes bounce{0%{transform:scale(0)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+  #resultScreen h2{text-align:center;font-size:24px;font-weight:900;margin-top:8px;}
+  .result-stats{display:flex;gap:10px;margin-top:18px;}
+  .rstat{flex:1;background:var(--card);border:2px solid var(--line);border-radius:18px;padding:14px 8px;text-align:center;}
+  .rstat b{font-size:20px;display:block;}
+  .rstat span{font-size:11px;color:var(--muted);font-weight:700;}
+  #wordReview{margin-top:16px;}
+  #wordReview h3{font-size:13px;color:var(--muted);font-weight:800;margin-bottom:8px;text-transform:uppercase;letter-spacing:.6px;}
+  .wchip{display:inline-block;margin:3px;padding:6px 11px;border-radius:12px;font-size:13px;font-weight:800;}
+  .wchip.ok{background:#E7F8DC;color:#2F6B00;border:1.5px solid var(--green);}
+  .wchip.miss{background:#FFE5E5;color:#A11;border:1.5px solid var(--red);}
+
+  /* ---------- Nav ---------- */
+  #navbar{
+    position:absolute;bottom:0;left:0;right:0;display:flex;background:#1E1A14;border-top:2px solid var(--line);
+    padding:8px 0 max(8px,env(safe-area-inset-bottom));z-index:6;
+  }
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);font-size:10px;font-weight:800;cursor:pointer;padding:4px 0;}
+  .nav-item .nico{font-size:22px;filter:grayscale(1);opacity:.55;transition:all .2s;}
+  .nav-item.active{color:var(--brand);} .nav-item.active .nico{filter:none;opacity:1;transform:translateY(-2px);}
+
+  /* ---------- Mascot bubble ---------- */
+  #mascot{
+    position:absolute;bottom:78px;left:14px;z-index:7;display:flex;align-items:flex-end;gap:8px;
+    pointer-events:none;opacity:0;transform:translateY(10px);transition:all .35s ease;
+  }
+  #mascot.show{opacity:1;transform:none;}
+  #mascotFace{font-size:44px;animation:float 3s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  #mascotBubble{
+    background:#fff;border:2px solid var(--line);border-radius:16px 16px 16px 4px;padding:10px 13px;
+    font-size:12.5px;font-weight:700;max-width:230px;box-shadow:0 4px 0 rgba(0,0,0,.06);
+  }
+
+  /* ---------- Settings & misc ---------- */
+  .panel{background:#fff;border:2px solid var(--line);border-radius:20px;padding:18px;margin-top:14px;}
+  .panel h3{font-size:15px;font-weight:900;margin-bottom:10px;}
+  .set-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1.5px solid #332C22;font-size:14px;font-weight:700;}
+  .set-row:last-child{border-bottom:none;}
+  select{font-family:inherit;font-weight:700;font-size:13px;padding:7px 10px;border-radius:10px;border:2px solid var(--line);background:#241F19;color:var(--ink);}
+  .danger{background:var(--miss-bg)!important;color:var(--miss-tx)!important;border:2px solid var(--red)!important;}
+  .banner{
+    margin-top:14px;background:#E5F4FF;border:2px solid var(--blue);color:#0B6EA8;border-radius:16px;
+    padding:12px 14px;font-size:12.5px;font-weight:700;display:flex;gap:9px;line-height:1.45;
+  }
+  .confetti{position:absolute;top:-10px;font-size:20px;animation:fall linear forwards;z-index:50;pointer-events:none;}
+  @keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:.2;}}
+  ::-webkit-scrollbar{width:0;height:0;}
+  @media (max-height:640px){ .phrase-en{font-size:19px;} .node{width:74px;height:74px;} }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Top bar -->
+  <div id="topbar">
+    <div class="stat"><span class="ico">🔥</span><span id="streakTxt">0</span><small>días</small></div>
+    <div class="stat"><span class="ico">💎</span><span id="xpTxt">0</span><small>XP</small></div>
+    <div class="stat"><span class="ico">❤️</span><span id="heartTxt">5</span></div>
+    <div class="spacer"></div>
+    <button class="icon-btn" id="btnSettings" title="Ajustes">⚙️</button>
+  </div>
+
+  <!-- HOME -->
+  <div class="screen active" id="homeScreen">
+    <div class="greet">
+      <h1 id="greetTitle">¡Hola! 👋</h1>
+      <p>Tu ruta de inglés conversacional, un día a la vez.</p>
+    </div>
+    <div id="pathWrap"></div>
+  </div>
+
+  <!-- LESSON -->
+  <div class="screen" id="lessonScreen">
+    <div id="progressTrack"><div id="progressFill"></div></div>
+    <div class="lesson-card">
+      <div class="phrase-en" id="phraseEn"></div>
+      <div class="phrase-es" id="phraseEs"></div>
+      <div class="tip" id="tipBox" style="display:none"><span>💡</span><span id="tipTxt"></span></div>
+      <div class="speed-row">
+        <label>🐢 VELOCIDAD</label>
+        <input type="range" id="speedRange" min="0.5" max="1" step="0.05" value="0.7">
+        <span id="speedVal">lento</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-listen" id="btnListen">🔊 Escuchar</button>
+        <button class="btn btn-speak" id="btnSpeak">🎤 Repetir</button>
+      </div>
+      <button class="btn btn-continue" id="btnContinue" style="display:none">Continuar ➜</button>
+      <div id="feedback"></div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="screen" id="resultScreen">
+    <div class="big-emoji" id="resultEmoji">🎉</div>
+    <h2 id="resultTitle">¡Lección completada!</h2>
+    <div class="result-stats">
+      <div class="rstat"><b id="rAcc" style="color:var(--green)">0%</b><span>PRECISIÓN</span></div>
+      <div class="rstat"><b id="rXp" style="color:var(--blue)">+0</b><span>XP GANADO</span></div>
+      <div class="rstat"><b id="rPerfect" style="color:var(--gold)">0</b><span>PERFECTAS</span></div>
+    </div>
+    <div id="wordReview"><h3>Revisa tus palabras</h3><div id="wordChips"></div></div>
+    <button class="btn btn-continue" id="btnFinish">Volver a la ruta 🏠</button>
+    <button class="btn btn-ghost" id="btnReplay" style="margin-top:10px">🔁 Repetir lección</button>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="screen" id="settingsScreen">
+    <div class="panel">
+      <h3>🎙️ Voz y reconocimiento</h3>
+      <div class="set-row"><span>Voz del profesor</span><select id="voiceSel"></select></div>
+      <div class="set-row"><span>Velocidad por defecto</span><select id="defSpeedSel">
+        <option value="0.55">Muy lenta (principiante)</option>
+        <option value="0.7" selected>Lenta (recomendada)</option>
+        <option value="0.85">Media</option>
+        <option value="1">Normal</option>
+      </select></div>
+    </div>
+    <div class="panel">
+      <h3>📊 Progreso</h3>
+      <div class="set-row"><span>Día actual</span><b id="setDay">1</b></div>
+      <div class="set-row"><span>Racha más larga</span><b id="setStreak">0 🔥</b></div>
+      <button class="btn btn-ghost" id="btnReset" style="width:100%;margin-top:12px">🗑️ Reiniciar todo</button>
+    </div>
+    <div class="banner"><span>🐝</span><span><b>Consejo de Honey:</b> practica 10 minutos al día. La constancia vence al talento. La corrección de pronunciación funciona mejor en Chrome o Edge con micrófono permitido.</span></div>
+  </div>
+
+  <!-- Mascot -->
+  <div id="mascot"><div id="mascotFace">🐝</div><div id="mascotBubble">¡Hola! Soy Honey 🍯</div></div>
+
+  <!-- Navbar -->
+  <div id="navbar">
+    <div class="nav-item active" data-nav="homeScreen"><span class="nico">🏠</span>Ruta</div>
+    <div class="nav-item" data-nav="settingsScreen"><span class="nico">⚙️</span>Ajustes</div>
+  </div>
+</div>
+
+<script>
+/* =====================================================
+   CURRÍCULO — 30 días de inglés conversacional estilo
+   "Slow English Podcast" (Miss Honey): vida cotidiana,
+   frases naturales, ritmo lento y claro.
+===================================================== */
+const CURRICULUM = [
+ {emoji:"👋",topic:"Saludos y presentaciones",phrases:[
+  {en:"Hi, how are you doing today?",es:"Hola, ¿cómo estás hoy?",tip:"'How are you doing' es más natural que solo 'how are you'."},
+  {en:"Nice to meet you. My name is Ana.",es:"Mucho gusto. Me llamo Ana.",tip:"'Nice to meet you' = encantado de conocerte."},
+  {en:"What do you do for a living?",es:"¿A qué te dedicas?",tip:"Asking about someone's job, naturally."},
+  {en:"I am learning English little by little.",es:"Estoy aprendiendo inglés poco a poco.",tip:"'Little by little' = poco a poco."},
+  {en:"See you later. Have a great day!",es:"Nos vemos luego. ¡Que tengas un buen día!",tip:"Despídete sonriendo: la voz también sonríe."}]},
+ {emoji:"🌅",topic:"Mi rutina de mañana",phrases:[
+  {en:"I usually wake up at seven o'clock.",es:"Normalmente me despierto a las siete.",tip:"'Usually' va antes del verbo principal."},
+  {en:"First, I make my bed and drink some water.",es:"Primero, ordeno mi cama y tomo agua.",tip:"'Make the bed' = tender la cama."},
+  {en:"Then I take a shower and get dressed.",es:"Luego me ducho y me visto.",tip:"'Get dressed' = vestirse. ¡Memorízalo!"},
+  {en:"I always eat breakfast before work.",es:"Siempre desayuno antes del trabajo.",tip:"'Before work' — sin 'the' cuando es general."},
+  {en:"My mornings are calm and quiet.",es:"Mis mañanas son tranquilas y serenas.",tip:"Repite 'calm' suavemente: la 'l' es muda."}]},
+ {emoji:"☕",topic:"En la cafetería",phrases:[
+  {en:"Can I get a coffee, please?",es:"¿Me puedes dar un café, por favor?",tip:"'Can I get...' es la forma más natural de pedir."},
+  {en:"I would like a latte with oat milk.",es:"Quisiera un latte con leche de avena.",tip:"'I would like' suena más educado que 'I want'."},
+  {en:"For here or to go?",es:"¿Para tomar aquí o para llevar?",tip:"Frase clave que te van a preguntar."},
+  {en:"Could I have the menu, please?",es:"¿Me podrías dar el menú, por favor?",tip:"'Could I have' = versión súper cortés."},
+  {en:"Keep the change. Thank you!",es:"Quédate con el cambio. ¡Gracias!",tip:"'Keep the change' = propina incluida, quédate el cambio."}]},
+ {emoji:"🌦️",topic:"Small talk: el clima",phrases:[
+  {en:"It looks like it's going to rain.",es:"Parece que va a llover.",tip:"'Looks like' = parece que. Muy usado."},
+  {en:"The weather is lovely today, isn't it?",es:"El clima está hermoso hoy, ¿verdad?",tip:"El 'isn't it?' al final busca tu acuerdo."},
+  {en:"I love sunny days like this one.",es:"Me encantan los días soleados como este.",tip:"'Like this one' = como este."},
+  {en:"It's a bit chilly this morning.",es:"Hace un poco de frío esta mañana.",tip:"'Chilly' = fresquito, más natural que 'cold'."},
+  {en:"They say it will clear up later.",es:"Dicen que despejará más tarde.",tip:"'Clear up' = despejar (el cielo)."}]},
+ {emoji:"👨‍👩‍👧",topic:"Hablando de la familia",phrases:[
+  {en:"I have two brothers and one sister.",es:"Tengo dos hermanos y una hermana.",tip:"'Brothers and sisters' = hermanos y hermanas."},
+  {en:"My mom cooks the best food ever.",es:"Mi mamá cocina la mejor comida del mundo.",tip:"'The best... ever' = la mejor de todas."},
+  {en:"We are a small but happy family.",es:"Somos una familia pequeña pero feliz.",tip:"'But' conecta contrastes con gracia."},
+  {en:"My dad lives in another city.",es:"Mi papá vive en otra ciudad.",tip:"'Another' = otro/a (indefinido)."},
+  {en:"Family time is important to me.",es:"El tiempo en familia es importante para mí.",tip:"'Is important TO me' — no olvides el 'to'."}]},
+ {emoji:"🍔",topic:"Ordenar comida",phrases:[
+  {en:"What do you recommend today?",es:"¿Qué me recomiendas hoy?",tip:"Perfecta para restaurantes. Memorízala."},
+  {en:"I'll have the grilled chicken, please.",es:"Voy a querer el pollo a la parrilla, por favor.",tip:"'I'll have' = elegante y muy común al pedir."},
+  {en:"Could we get some more water?",es:"¿Nos podrían traer más agua?",tip:"'Could we get' = pidiendo con suavidad."},
+  {en:"Everything was delicious, thank you.",es:"Todo estuvo delicioso, gracias.",tip:"'Delicious' — acentúa la segunda sílaba."},
+  {en:"Could we have the check, please?",es:"¿Nos podrían traer la cuenta, por favor?",tip:"'The check' = la cuenta (en EE. UU.)."}]},
+ {emoji:"🗺️",topic:"Pidiendo direcciones",phrases:[
+  {en:"Excuse me, how do I get to the station?",es:"Disculpe, ¿cómo llego a la estación?",tip:"'How do I get to...' = ¿cómo llego a...?"},
+  {en:"Is it far from here?",es:"¿Está lejos de aquí?",tip:"Corta y poderosa. Úsala siempre."},
+  {en:"Go straight and turn left at the corner.",es:"Ve derecho y gira a la izquierda en la esquina.",tip:"'Turn left / turn right' = gira."},
+  {en:"You can't miss it. It's right there.",es:"No puedes perderlo. Está justo ahí.",tip:"'You can't miss it' = es imposible no verlo."},
+  {en:"Thank you so much for your help.",es:"Muchísimas gracias por tu ayuda.",tip:"'Thank you SO much' = agradecimiento extra."}]},
+ {emoji:"🛍️",topic:"De compras",phrases:[
+  {en:"I'm just looking, thanks.",es:"Solo estoy mirando, gracias.",tip:"La frase que te salva de cualquier tienda."},
+  {en:"How much does this cost?",es:"¿Cuánto cuesta esto?",tip:"'How much' siempre para precios."},
+  {en:"Do you have this in a smaller size?",es:"¿Tienen esto en una talla más pequeña?",tip:"'In a smaller size' = en talla más pequeña."},
+  {en:"It's a little over my budget.",es:"Está un poco fuera de mi presupuesto.",tip:"'Over my budget' = sobre mi presupuesto."},
+  {en:"I'll take it. Can I pay by card?",es:"Me lo llevo. ¿Puedo pagar con tarjeta?",tip:"'I'll take it' = me lo llevo / lo compro."}]},
+ {emoji:"😊",topic:"Sentimientos y emociones",phrases:[
+  {en:"I feel great today. And you?",es:"Me siento genial hoy. ¿Y tú?",tip:"'I feel + adjetivo' = me siento..."},
+  {en:"Don't worry, everything will be fine.",es:"No te preocupes, todo estará bien.",tip:"'Don't worry' = tranquilizadora y esencial."},
+  {en:"I'm a little nervous about tomorrow.",es:"Estoy un poco nervioso por mañana.",tip:"'Nervous about' = nervioso por/a causa de."},
+  {en:"That makes me really happy.",es:"Eso me pone muy feliz.",tip:"'Makes me + emoción' = me hace sentir..."},
+  {en:"Take it easy. There's no rush.",es:"Tómatelo con calma. No hay prisa.",tip:"'Take it easy' = relájate, sin presiones."}]},
+ {emoji:"📅",topic:"Haciendo planes",phrases:[
+  {en:"Are you free this weekend?",es:"¿Estás libre este fin de semana?",tip:"Forma directa de invitar sin invitar aún."},
+  {en:"Let's meet at the park at five.",es:"Encontremos en el parque a las cinco.",tip:"'Let's meet' = juntémonos."},
+  {en:"Sounds good to me. What about you?",es:"Me suena bien. ¿Y a ti?",tip:"'Sounds good' = me parece bien."},
+  {en:"I have to check my calendar first.",es:"Tengo que revisar mi calendario primero.",tip:"'Check' = revisar/verificar."},
+  {en:"Let's play it by ear.",es:"Vamos a ir viendo sobre la marcha.",tip:"Idiom clave: decidir sin plan fijo."}]},
+ {emoji:"🩺",topic:"En el doctor",phrases:[
+  {en:"I haven't been feeling well lately.",es:"No me he sentido bien últimamente.",tip:"'Lately' = últimamente (va al final)."},
+  {en:"I have a headache and a sore throat.",es:"Me duele la cabeza y tengo dolor de garganta.",tip:"'A headache' = dolor de cabeza (con 'a')."},
+  {en:"It hurts when I swallow.",es:"Me duele cuando trago.",tip:"'It hurts when...' = duele cuando..."},
+  {en:"How often should I take this medicine?",es:"¿Con qué frecuencia debo tomar esta medicina?",tip:"'How often' = cada cuánto."},
+  {en:"Thank you, doctor. I feel much better now.",es:"Gracias, doctor. Me siento mucho mejor ahora.",tip:"Cierre perfecto para cualquier visita."}]},
+ {emoji:"🚌",topic:"Transporte y viajes",phrases:[
+  {en:"Does this bus go to the city center?",es:"¿Este autobús va al centro de la ciudad?",tip:"'Go to' = llegar/hasta."},
+  {en:"How long does the trip take?",es:"¿Cuánto tiempo toma el viaje?",tip:"'How long' = cuánto tiempo."},
+  {en:"I missed my train this morning.",es:"Perdí mi tren esta mañana.",tip:"'Miss' = perder (tren, vuelo, oportunidad)."},
+  {en:"Where should I get off?",es:"¿Dónde debería bajarme?",tip:"'Get off' = bajar (del transporte)."},
+  {en:"The next stop is mine. Excuse me.",es:"La próxima parada es la mía. Disculpe.",tip:"'Excuse me' abre paso con cortesía."}]},
+ {emoji:"🎨",topic:"Pasatiempos",phrases:[
+  {en:"What do you like to do in your free time?",es:"¿Qué te gusta hacer en tu tiempo libre?",tip:"La pregunta clave para conocer gente."},
+  {en:"I enjoy reading and listening to music.",es:"Disfruto leer y escuchar música.",tip:"'Enjoy + gerundio' = disfrutar haciendo."},
+  {en:"I've been into photography lately.",es:"Últimamente me ha interesado la fotografía.",tip:"'Into something' = interesado en algo."},
+  {en:"Do you play any sports?",es:"¿Practicas algún deporte?",tip:"'Any' en preguntas = algún/alguna."},
+  {en:"We should do it together sometime.",es:"Deberíamos hacerlo juntos algún día.",tip:"'Sometime' = algún día, sin fecha."}]},
+ {emoji:"📞",topic:"Hablando por teléfono",phrases:[
+  {en:"Hi, this is Laura. May I speak with John?",es:"Hola, soy Laura. ¿Puedo hablar con John?",tip:"'This is...' = al presentarte por teléfono."},
+  {en:"I'm sorry, he's not available right now.",es:"Lo siento, no está disponible ahora.",tip:"'Available' = disponible."},
+  {en:"Can I leave a message?",es:"¿Puedo dejar un mensaje?",tip:"'Leave a message' = dejar recado."},
+  {en:"Could you repeat that, please?",es:"¿Podrías repetir eso, por favor?",tip:"Salvavidas total. Úsala sin vergüenza."},
+  {en:"I'll call you back later. Bye!",es:"Te devuelvo la llamada luego. ¡Adiós!",tip:"'Call back' = devolver la llamada."}]},
+ {emoji:"🧑‍🤝‍🧑",topic:"Describiendo personas",phrases:[
+  {en:"She is friendly and easy to talk to.",es:"Ella es amigable y fácil de conversar.",tip:"'Easy to talk to' = fácil de hablar."},
+  {en:"He has a great sense of humor.",es:"Él tiene un gran sentido del humor.",tip:"'Sense of humor' = sentido del humor."},
+  {en:"They are very kind to everyone.",es:"Son muy amables con todos.",tip:"'Kind' = amable. Palabra de oro."},
+  {en:"My friend is tall with curly hair.",es:"Mi amigo es alto y tiene cabello rizado.",tip:"Describe: altura + cabello."},
+  {en:"What does your brother look like?",es:"¿Cómo es tu hermano (físicamente)?",tip:"'Look like' = apariencia física."}]},
+ {emoji:"💼",topic:"El trabajo",phrases:[
+  {en:"I work as a teacher in a small school.",es:"Trabajo como maestra en una escuela pequeña.",tip:"'Work as' = trabajar como."},
+  {en:"My job is challenging but rewarding.",es:"Mi trabajo es desafiante pero gratificante.",tip:"'Rewarding' = que da satisfacción."},
+  {en:"I'm in charge of the marketing team.",es:"Estoy a cargo del equipo de marketing.",tip:"'In charge of' = a cargo de."},
+  {en:"We have a meeting every Monday morning.",es:"Tenemos una reunión cada lunes por la mañana.",tip:"Días con 'every' no llevan 'on'."},
+  {en:"I'm looking for a new opportunity.",es:"Estoy buscando una nueva oportunidad.",tip:"'Looking for' = buscando."}]},
+ {emoji:"✈️",topic:"De viaje",phrases:[
+  {en:"Where are you traveling from?",es:"¿De dónde viajas?",tip:"Pregunta típica de aeropuerto."},
+  {en:"I'd like a window seat, please.",es:"Quisiera un asiento de ventana, por favor.",tip:"'Window seat' = ventanilla. 'Aisle' = pasillo."},
+  {en:"Is this your first time here?",es:"¿Es tu primera vez aquí?",tip:"Rompehielos universal en viajes."},
+  {en:"The view from here is breathtaking.",es:"La vista desde aquí es impresionante.",tip:"'Breathtaking' = que quita el aliento."},
+  {en:"I want to remember this moment forever.",es:"Quiero recordar este momento para siempre.",tip:"Cierra experiencias con emoción."}]},
+ {emoji:"🍽️",topic:"En el restaurante (2)",phrases:[
+  {en:"A table for two, please.",es:"Una mesa para dos, por favor.",tip:"Entrada clásica al restaurante."},
+  {en:"We're not ready to order yet.",es:"Aún no estamos listos para ordenar.",tip:"'Yet' = todavía/aún en negativas."},
+  {en:"What are the house specials?",es:"¿Cuáles son los especiales de la casa?",tip:"'House specials' = platos estrella."},
+  {en:"I'm allergic to peanuts.",es:"Soy alérgico a los cacahuates.",tip:"Vital aprenderla. 'Allergic to'."},
+  {en:"The service here is excellent.",es:"El servicio aquí es excelente.",tip:"'Service' = servicio. Fácil y útil."}]},
+ {emoji:"💭",topic:"Dar opiniones",phrases:[
+  {en:"In my opinion, it's a great idea.",es:"En mi opinión, es una gran idea.",tip:"'In my opinion' abre cualquier opinión."},
+  {en:"I think so too.",es:"Yo también lo pienso.",tip:"Acuerdo corto y natural."},
+  {en:"I see your point, but I disagree.",es:"Entiendo tu punto, pero no estoy de acuerdo.",tip:"'See your point' = entiendo tu argumento."},
+  {en:"To be honest, I don't really like it.",es:"Siendo honesto, realmente no me gusta.",tip:"'To be honest' = siendo honesto."},
+  {en:"It depends on the situation.",es:"Depende de la situación.",tip:"'It depends' = respuesta diplomática perfecta."}]},
+ {emoji:"📖",topic:"Contar historias del pasado",phrases:[
+  {en:"When I was a kid, I lived by the sea.",es:"Cuando era niño, vivía cerca del mar.",tip:"'When I was...' + pasado."},
+  {en:"Last year, I visited my grandparents.",es:"El año pasado visité a mis abuelos.",tip:"'Visited' = visité (pasado simple)."},
+  {en:"It was one of the best days of my life.",es:"Fue uno de los mejores días de mi vida.",tip:"'One of the best' = uno de los mejores."},
+  {en:"We used to play outside every afternoon.",es:"Solíamos jugar afuera cada tarde.",tip:"'Used to' = solía/acción pasada habitual."},
+  {en:"I'll never forget that experience.",es:"Nunca olvidaré esa experiencia.",tip:"'I'll never forget' = nunca olvidaré."}]},
+ {emoji:"💡",topic:"Hacer sugerencias",phrases:[
+  {en:"Why don't we watch a movie tonight?",es:"¿Por qué no vemos una película esta noche?",tip:"'Why don't we...' = sugerencia perfecta."},
+  {en:"How about ordering some pizza?",es:"¿Qué tal si pedimos pizza?",tip:"'How about + gerundio' = qué tal si..."},
+  {en:"You should try the new café downtown.",es:"Deberías probar el nuevo café del centro.",tip:"'You should' = consejo directo."},
+  {en:"Let's take a break and get some fresh air.",es:"Tomemos un descanso y respiremos aire fresco.",tip:"'Take a break' = tomar un descanso."},
+  {en:"That's a great idea. Count me in!",es:"Qué gran idea. ¡Cuenta conmigo!",tip:"'Count me in' = cuenta conmigo."}]},
+ {emoji:"🌿",topic:"Salud y hábitos",phrases:[
+  {en:"I try to drink enough water every day.",es:"Intento tomar suficiente agua cada día.",tip:"'Try to' = intentar hacer algo."},
+  {en:"Running helps me clear my mind.",es:"Correr me ayuda a despejar la mente.",tip:"'Clear my mind' = despejar la mente."},
+  {en:"I need to cut down on sugar.",es:"Necesito reducir el azúcar.",tip:"'Cut down on' = reducir consumo."},
+  {en:"Sleep is more important than people think.",es:"Dormir es más importante de lo que piensa la gente.",tip:"Comparativo con 'than'."},
+  {en:"Small habits make a big difference.",es:"Los pequeños hábitos marcan una gran diferencia.",tip:"Filosofía Duolingo+Honey junta."}]},
+ {emoji:"📱",topic:"Tecnología",phrases:[
+  {en:"My phone is running out of battery.",es:"Mi teléfono se está quedando sin batería.",tip:"'Running out of' = quedándose sin."},
+  {en:"Can you send me the link?",es:"¿Puedes enviarme el enlace?",tip:"'Send me' = envíame."},
+  {en:"The Wi-Fi connection is really slow today.",es:"La conexión Wi-Fi está muy lenta hoy.",tip:"'Connection' = conexión. Cognado fácil."},
+  {en:"I spend too much time on social media.",es:"Paso demasiado tiempo en redes sociales.",tip:"'Spend time on' = pasar tiempo en."},
+  {en:"Let me look it up on the internet.",es:"Déjame buscarlo en internet.",tip:"'Look up' = buscar (información)."}]},
+ {emoji:"💳",topic:"Dinero y banco",phrases:[
+  {en:"I'd like to open a bank account.",es:"Quisiera abrir una cuenta bancaria.",tip:"'Open an account' = abrir una cuenta."},
+  {en:"How much is the monthly fee?",es:"¿Cuánto es la tarifa mensual?",tip:"'Monthly fee' = tarifa mensual."},
+  {en:"I need to withdraw some cash.",es:"Necesito retirar algo de efectivo.",tip:"'Withdraw cash' = retirar dinero."},
+  {en:"Could you break this bill into smaller bills?",es:"¿Podrías cambiar este billete por billetes más pequeños?",tip:"'Break a bill' = cambiar a billetes menores."},
+  {en:"I'm saving up for a new laptop.",es:"Estoy ahorrando para una laptop nueva.",tip:"'Save up for' = ahorrar para."}]},
+ {emoji:"🎉",topic:"Celebraciones",phrases:[
+  {en:"Happy birthday! Make a wish.",es:"¡Feliz cumpleaños! Pide un deseo.",tip:"'Make a wish' = pedir un deseo."},
+  {en:"Congratulations on your new job!",es:"¡Felicidades por tu nuevo trabajo!",tip:"'Congratulations on' = felicidades por."},
+  {en:"Let's raise a toast to the newlyweds.",es:"Brindemos por los recién casados.",tip:"'Raise a toast' = brindar."},
+  {en:"The party was a blast!",es:"¡La fiesta estuvo increíble!",tip:"'A blast' = súper divertido (informal)."},
+  {en:"Thanks for inviting me. I had a wonderful time.",es:"Gracias por invitarme. La pasé maravillosamente.",tip:"Cierre elegante para toda fiesta."}]},
+ {emoji:"🤝",topic:"Problemas y consejos",phrases:[
+  {en:"I'm going through a hard time.",es:"Estoy pasando por un momento difícil.",tip:"'Go through' = atravesar/pasar por."},
+  {en:"Hang in there. Things will get better.",es:"Aguanta. Las cosas mejorarán.",tip:"'Hang in there' = aguanta/ánimo."},
+  {en:"That sounds tough. I'm here for you.",es:"Suena difícil. Estoy aquí para ti.",tip:"'I'm here for you' = apoyo emocional puro."},
+  {en:"Why don't you talk to her about it?",es:"¿Por qué no le hablas de eso?",tip:"Consejo suave con 'why don't you'."},
+  {en:"Everything happens for a reason.",es:"Todo pasa por algo.",tip:"Frase de consuelo universal."}]},
+ {emoji:"🌠",topic:"Sueños y futuro",phrases:[
+  {en:"My dream is to travel the world.",es:"Mi sueño es viajar por el mundo.",tip:"'Travel the world' = dar la vuelta al mundo."},
+  {en:"I hope to become fluent in English.",es:"Espero llegar a hablar inglés con fluidez.",tip:"'Fluent' = con fluidez. ¡Esa eres tú!"},
+  {en:"One day, I want to live abroad.",es:"Algún día quiero vivir en el extranjero.",tip:"'Abroad' = en el extranjero."},
+  {en:"The future looks bright and full of hope.",es:"El futuro luce brillante y lleno de esperanza.",tip:"'Looks bright' = luce prometedor."},
+  {en:"Never stop learning and growing.",es:"Nunca dejes de aprender y crecer.",tip:"Tu mantra para cerrar el curso."}]},
+ {emoji:"🏆",topic:"Repaso final: conversación libre",phrases:[
+  {en:"Thank you for practicing with me every day.",es:"Gracias por practicar conmigo cada día.",tip:"Solo llegaste hasta aquí practicando a diario."},
+  {en:"I feel more confident when I speak now.",es:"Me siento más segura al hablar ahora.",tip:"'Confident' = seguro/a de ti misma."},
+  {en:"Practice makes perfect, little by little.",es:"La práctica hace al maestro, poco a poco.",tip:"'Practice makes perfect' = dicho clásico."},
+  {en:"What would you like to talk about today?",es:"¿De qué te gustaría hablar hoy?",tip:"Pregunta para abrir cualquier conversación."},
+  {en:"This is just the beginning of my journey.",es:"Este es solo el comienzo de mi camino.",tip:"El día 31 lo escribes tú. 🐝",}]},
+];
+</script>
+<script src="app.js"></script>
+</body>
+</html>
