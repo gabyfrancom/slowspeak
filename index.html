@@ -6,39 +6,41 @@
 <title>SlowSpeak — Inglés conversacional paso a paso</title>
 <style>
   :root{
-    --bg:#171310; --ink:#F6F0E4; --muted:#A99D8C;
-    --brand:#FF8A3D; --brand-dark:#E8722A;
-    --green:#6FCF03; --green-dark:#4E9203;
-    --blue:#22B5F5; --blue-dark:#1899D6;
-    --red:#FF5C5C; --red-dark:#D63A3A;
-    --gold:#FFC800; --purple:#A560E8;
-    --card:#241F19; --line:#3D352A;
-    --pron:#B9A7F7;
-    --ok-bg:rgba(111,207,3,.14); --ok-tx:#A9E863;
-    --miss-bg:rgba(255,92,92,.14); --miss-tx:#FF9C9C;
+    --bg:#170F2B; --ink:#F1EAFF; --muted:#B0A0D9;
+    --brand:#FF5FA2; --brand-dark:#E23F86;
+    --green:#3DDC97; --green-dark:#22B67A;
+    --blue:#3FC5F0; --blue-dark:#1EA5D6;
+    --red:#FF5C7A; --red-dark:#D63A58;
+    --gold:#FFC93C; --purple:#B98AFF;
+    --card:#1F1538; --line:#3E2B66;
+    --violet:#C6A6FF; --violet-dark:#9B6CFF;
+    --pron:#FFC93C;
+    --es:#3DE0C0;
+    --ok-bg:rgba(61,220,151,.16); --ok-tx:#6CF0B4;
+    --miss-bg:rgba(255,92,122,.16); --miss-tx:#FF9CAF;
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
   body{
     font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
-    background:#0E0C0A; color:var(--ink);
+    background:#0A0616; color:var(--ink);
     overflow:hidden;
   }
-  #app{max-width:520px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;position:relative;background:var(--bg);box-shadow:0 0 50px rgba(0,0,0,.5);}
+  #app{max-width:520px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;position:relative;background:var(--bg);box-shadow:0 0 50px rgba(0,0,0,.6);}
 
   /* ---------- Top bar ---------- */
   #topbar{
     display:flex;align-items:center;gap:10px;padding:14px 16px 10px;
-    background:linear-gradient(180deg,#2A231A,#171310);border-bottom:2px solid var(--line);
+    background:linear-gradient(180deg,#2A1D4C,#170F2B);border-bottom:2px solid var(--line);
     flex-shrink:0;z-index:5;
   }
   .stat{display:flex;align-items:center;gap:5px;font-weight:800;font-size:15px;color:var(--ink);}
   .stat .ico{font-size:18px;}
   .stat small{font-weight:600;color:var(--muted);font-size:11px;}
-  #streakTxt{color:#FF9600;} #xpTxt{color:var(--blue);} #heartTxt{color:var(--red);}
+  #streakTxt{color:var(--gold);} #xpTxt{color:var(--blue);} #heartTxt{color:var(--red);}
   #topbar .spacer{flex:1;}
   .icon-btn{
-    width:38px;height:38px;border-radius:12px;border:2px solid var(--line);background:#fff;
+    width:38px;height:38px;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--ink);
     font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;
     transition:transform .1s;
   }
@@ -50,7 +52,7 @@
   @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
   /* ---------- Home / path ---------- */
-  .greet h1{font-size:22px;font-weight:900;letter-spacing:-.3px;}
+  .greet h1{font-size:22px;font-weight:900;letter-spacing:-.3px;color:var(--violet);}
   .greet p{color:var(--muted);font-size:13px;margin-top:2px;font-weight:600;}
   #pathWrap{margin-top:18px;display:flex;flex-direction:column;align-items:center;gap:0;padding-bottom:20px;}
   .node{
@@ -61,11 +63,11 @@
   .node:active{transform:scale(.92);}
   .node .lbl{font-size:10px;font-weight:700;opacity:.95;letter-spacing:.4px;}
   .node.done{background:var(--green);box-shadow:0 6px 0 var(--green-dark);}
-  .node.locked{background:#D8CFC0;box-shadow:0 6px 0 #C2B8A8;cursor:not-allowed;}
+  .node.locked{background:#382A5C;box-shadow:0 6px 0 #271D42;cursor:not-allowed;border-color:#4A3878;}
   .node.current{background:var(--brand);box-shadow:0 6px 0 var(--brand-dark);animation:pulse 2s infinite;}
   .node.star::after{content:'★';position:absolute;top:-14px;right:-6px;font-size:22px;color:var(--gold);text-shadow:0 2px 0 #D89E00;}
   @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
-  .connector{width:6px;height:34px;background:#3D352A;border-radius:3px;}
+  .connector{width:6px;height:34px;background:var(--line);border-radius:3px;}
   .day-card{
     width:100%;background:var(--card);border:2px solid var(--line);border-radius:20px;padding:14px 16px;
     display:flex;align-items:center;gap:12px;margin-top:10px;cursor:pointer;transition:transform .12s;
@@ -78,18 +80,20 @@
   .day-state{font-size:20px;}
 
   /* ---------- Lesson ---------- */
-  #progressTrack{height:14px;background:#EFE5D2;border-radius:8px;overflow:hidden;margin-bottom:14px;border:2px solid var(--line);}
-  #progressFill{height:100%;width:0%;background:linear-gradient(90deg,var(--brand),var(--gold));border-radius:8px;transition:width .4s ease;}
+  #progressTrack{height:14px;background:#241738;border-radius:8px;overflow:hidden;margin-bottom:14px;border:2px solid var(--line);}
+  #progressFill{height:100%;width:0%;background:linear-gradient(90deg,var(--violet-dark),var(--brand));border-radius:8px;transition:width .4s ease;}
   .lesson-card{
     background:var(--card);border:2px solid var(--line);border-radius:24px;padding:22px 18px;text-align:center;
-    box-shadow:0 4px 0 rgba(0,0,0,.05);
+    box-shadow:0 4px 0 rgba(0,0,0,.25);
   }
-  .phrase-en{font-size:22px;font-weight:900;line-height:1.35;letter-spacing:-.2px;}
-  .phrase-en .word{border-radius:6px;padding:0 2px;transition:background .3s;}
-  .phrase-pron{margin-top:8px;font-size:15.5px;font-weight:700;color:var(--pron);letter-spacing:.5px;font-style:italic;}
-  .phrase-es{color:var(--muted);font-size:14px;margin-top:6px;font-weight:600;}
+  .section-lbl{font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;opacity:.65;margin-top:14px;display:block;}
+  .section-lbl:first-child{margin-top:0;}
+  .phrase-en{font-size:22px;font-weight:900;line-height:1.35;letter-spacing:-.2px;color:var(--violet);}
+  .phrase-en .word{border-radius:6px;padding:0 2px;transition:background .3s, color .3s;}
+  .phrase-pron{margin-top:2px;font-size:16px;font-weight:800;color:var(--pron);letter-spacing:.4px;font-style:italic;}
+  .phrase-es{color:var(--es);font-size:15px;margin-top:2px;font-weight:700;}
   .tip{
-    margin-top:14px;background:#33290F;border:1.5px dashed #8A6A1F;color:#E8C96B;font-size:12.5px;
+    margin-top:14px;background:#2C1F4E;border:1.5px dashed var(--gold);color:#FFE29B;font-size:12.5px;
     border-radius:14px;padding:9px 12px;font-weight:600;text-align:left;display:flex;gap:8px;
   }
   .btn-row{display:flex;gap:10px;margin-top:18px;}
@@ -100,21 +104,27 @@
   }
   .btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.15);}
   .btn:disabled{filter:grayscale(.7) opacity(.6);cursor:not-allowed;}
-  .btn-listen{background:var(--blue);} .btn-speak{background:var(--green);} .btn-skip{background:#B7AB9B;}
-  .btn-check{background:var(--green);} .btn-continue{background:var(--blue);width:100%;margin-top:16px;}
-  .btn-ghost{background:#fff;color:var(--blue);border:2px solid var(--line);box-shadow:0 3px 0 var(--line);}
+  .btn-listen{background:var(--blue);} .btn-speak{background:var(--brand);} .btn-skip{background:#5B4A87;}
+  .btn-check{background:var(--green);} .btn-continue{background:var(--violet-dark);width:100%;margin-top:16px;}
+  .btn-ghost{background:var(--card);color:var(--violet);border:2px solid var(--line);box-shadow:0 3px 0 var(--line);}
   .mic-live{animation:micPulse 1.2s infinite;}
   @keyframes micPulse{0%,100%{box-shadow:0 4px 0 rgba(0,0,0,.15),0 0 0 0 rgba(88,204,2,.5)}50%{box-shadow:0 4px 0 rgba(0,0,0,.15),0 0 0 14px rgba(88,204,2,0)}}
-  #feedback{
+  .feedback{
     margin-top:16px;border-radius:18px;padding:14px 16px;display:none;font-size:14px;font-weight:700;text-align:left;
     animation:fadeIn .25s ease;
   }
-  #feedback.show{display:block;}
-  #feedback.good{background:var(--ok-bg);border:2px solid var(--green);color:var(--ok-tx);}
-  #feedback.mid{background:#33290F;border:2px solid var(--gold);color:#E8C96B;}
-  #feedback.bad{background:var(--miss-bg);border:2px solid var(--red);color:var(--miss-tx);}
-  #heardTxt{font-size:13px;color:var(--muted);font-weight:600;margin-top:6px;font-style:italic;}
-  .speed-row{display:flex;align-items:center;gap:10px;margin-top:14px;background:#FBF4E4;border-radius:14px;padding:10px 14px;border:2px solid var(--line);}
+  .feedback.show{display:block;}
+  .feedback.good{background:var(--ok-bg);border:2px solid var(--green);color:var(--ok-tx);}
+  .feedback.mid{background:#3B2A57;border:2px solid var(--gold);color:#FFE29B;}
+  .feedback.bad{background:var(--miss-bg);border:2px solid var(--red);color:var(--miss-tx);}
+  .heardTxt{font-size:13px;color:var(--muted);font-weight:600;margin-top:6px;font-style:italic;}
+  textarea{
+    width:100%;font-family:inherit;font-weight:600;font-size:14px;padding:12px 14px;border-radius:14px;
+    border:2px solid var(--line);background:#241738;color:var(--ink);resize:vertical;min-height:70px;
+  }
+  textarea:focus{outline:none;border-color:var(--violet-dark);}
+  textarea::placeholder{color:var(--muted);}
+  .speed-row{display:flex;align-items:center;gap:10px;margin-top:14px;background:#241738;border-radius:14px;padding:10px 14px;border:2px solid var(--line);}
   .speed-row label{font-size:12px;font-weight:800;color:var(--muted);white-space:nowrap;}
   input[type=range]{flex:1;accent-color:var(--brand);height:22px;}
   #speedVal{font-size:12px;font-weight:900;color:var(--brand);min-width:44px;text-align:right;}
@@ -130,17 +140,17 @@
   #wordReview{margin-top:16px;}
   #wordReview h3{font-size:13px;color:var(--muted);font-weight:800;margin-bottom:8px;text-transform:uppercase;letter-spacing:.6px;}
   .wchip{display:inline-block;margin:3px;padding:6px 11px;border-radius:12px;font-size:13px;font-weight:800;}
-  .wchip.ok{background:#E7F8DC;color:#2F6B00;border:1.5px solid var(--green);}
-  .wchip.miss{background:#FFE5E5;color:#A11;border:1.5px solid var(--red);}
+  .wchip.ok{background:var(--ok-bg);color:var(--ok-tx);border:1.5px solid var(--green);}
+  .wchip.miss{background:var(--miss-bg);color:var(--miss-tx);border:1.5px solid var(--red);}
 
   /* ---------- Nav ---------- */
   #navbar{
-    position:absolute;bottom:0;left:0;right:0;display:flex;background:#1E1A14;border-top:2px solid var(--line);
+    position:absolute;bottom:0;left:0;right:0;display:flex;background:#150C29;border-top:2px solid var(--line);
     padding:8px 0 max(8px,env(safe-area-inset-bottom));z-index:6;
   }
   .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);font-size:10px;font-weight:800;cursor:pointer;padding:4px 0;}
   .nav-item .nico{font-size:22px;filter:grayscale(1);opacity:.55;transition:all .2s;}
-  .nav-item.active{color:var(--brand);} .nav-item.active .nico{filter:none;opacity:1;transform:translateY(-2px);}
+  .nav-item.active{color:var(--violet);} .nav-item.active .nico{filter:none;opacity:1;transform:translateY(-2px);}
 
   /* ---------- Mascot bubble ---------- */
   #mascot{
@@ -151,8 +161,8 @@
   #mascotFace{font-size:44px;animation:float 3s ease-in-out infinite;}
   @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
   #mascotBubble{
-    background:#fff;border:2px solid var(--line);border-radius:16px 16px 16px 4px;padding:10px 13px;
-    font-size:12.5px;font-weight:700;max-width:230px;box-shadow:0 4px 0 rgba(0,0,0,.06);
+    background:var(--card);border:2px solid var(--violet-dark);color:var(--ink);border-radius:16px 16px 16px 4px;padding:10px 13px;
+    font-size:12.5px;font-weight:700;max-width:230px;box-shadow:0 4px 0 rgba(0,0,0,.35);
   }
 
   /* ---------- Rutas temáticas ---------- */
@@ -167,23 +177,23 @@
   .route-emoji{font-size:32px;}
   .route-card b{font-size:13px;display:block;margin-top:6px;letter-spacing:-.2px;}
   .route-prog{font-size:10.5px;color:var(--muted);font-weight:700;margin-top:3px;display:block;}
-  .route-bar{height:6px;background:#332C22;border-radius:4px;margin-top:8px;overflow:hidden;}
-  .route-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--gold));border-radius:4px;}
+  .route-bar{height:6px;background:#241738;border-radius:4px;margin-top:8px;overflow:hidden;}
+  .route-fill{height:100%;background:linear-gradient(90deg,var(--violet-dark),var(--brand));border-radius:4px;}
   .route-head{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
-  .route-head h2{font-size:19px;font-weight:900;letter-spacing:-.3px;}
+  .route-head h2{font-size:19px;font-weight:900;letter-spacing:-.3px;color:var(--violet);}
   .route-head p{font-size:12px;color:var(--muted);font-weight:600;margin-top:1px;}
 
   /* ---------- Settings & misc ---------- */
-  .panel{background:#fff;border:2px solid var(--line);border-radius:20px;padding:18px;margin-top:14px;}
-  .panel h3{font-size:15px;font-weight:900;margin-bottom:10px;}
-  .set-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1.5px solid #332C22;font-size:14px;font-weight:700;}
+  .panel{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:18px;margin-top:14px;}
+  .panel h3{font-size:15px;font-weight:900;margin-bottom:10px;color:var(--violet);}
+  .set-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1.5px solid var(--line);font-size:14px;font-weight:700;}
   .set-row>span{flex-shrink:1;}
   .set-row:last-child{border-bottom:none;}
-  select{font-family:inherit;font-weight:700;font-size:12.5px;padding:7px 10px;border-radius:10px;border:2px solid var(--line);background:#241F19;color:var(--ink);max-width:58%;min-width:0;overflow:hidden;text-overflow:ellipsis;}
-  option{background:#241F19;color:#F6F0E4;}
+  select{font-family:inherit;font-weight:700;font-size:12.5px;padding:7px 10px;border-radius:10px;border:2px solid var(--line);background:#241738;color:var(--ink);max-width:58%;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+  option{background:#241738;color:var(--ink);}
   .danger{background:var(--miss-bg)!important;color:var(--miss-tx)!important;border:2px solid var(--red)!important;}
   .banner{
-    margin-top:14px;background:#E5F4FF;border:2px solid var(--blue);color:#0B6EA8;border-radius:16px;
+    margin-top:14px;background:#1E2E4A;border:2px solid var(--blue);color:#9FDFFF;border-radius:16px;
     padding:12px 14px;font-size:12.5px;font-weight:700;display:flex;gap:9px;line-height:1.45;
   }
   .confetti{position:absolute;top:-10px;font-size:20px;animation:fall linear forwards;z-index:50;pointer-events:none;}
@@ -226,7 +236,11 @@
   <div class="screen" id="lessonScreen">
     <div id="progressTrack"><div id="progressFill"></div></div>
     <div class="lesson-card">
+      <span class="section-lbl" style="color:var(--violet)">✍️ Escritura</span>
       <div class="phrase-en" id="phraseEn"></div>
+      <span class="section-lbl" style="color:var(--pron)">🗣️ Pronunciación</span>
+      <div class="phrase-pron" id="phrasePr"></div>
+      <span class="section-lbl" style="color:var(--es)">🇪🇸 Traducción</span>
       <div class="phrase-es" id="phraseEs"></div>
       <div class="tip" id="tipBox" style="display:none"><span>💡</span><span id="tipTxt"></span></div>
       <div class="speed-row">
@@ -239,7 +253,7 @@
         <button class="btn btn-speak" id="btnSpeak">🎤 Repetir</button>
       </div>
       <button class="btn btn-continue" id="btnContinue" style="display:none">Continuar ➜</button>
-      <div id="feedback"></div>
+      <div class="feedback" id="feedback"></div>
     </div>
   </div>
 
@@ -255,6 +269,38 @@
     <div id="wordReview"><h3>Revisa tus palabras</h3><div id="wordChips"></div></div>
     <button class="btn btn-continue" id="btnFinish">Volver a la ruta 🏠</button>
     <button class="btn btn-ghost" id="btnReplay" style="margin-top:10px">🔁 Repetir lección</button>
+  </div>
+
+  <!-- TRADUCTOR -->
+  <div class="screen" id="translateScreen">
+    <div class="greet">
+      <h1>🌐 Traductor</h1>
+      <p>Escribe una frase en español y aprende a decirla en inglés.</p>
+    </div>
+    <div class="panel">
+      <h3>✍️ Tu frase en español</h3>
+      <textarea id="esInput" rows="3" placeholder="Ej: ¿Dónde está la parada del autobús?"></textarea>
+      <button class="btn btn-continue" id="btnTranslate" style="margin-top:12px">🔄 Traducir</button>
+    </div>
+
+    <div class="lesson-card" id="tResult" style="display:none;margin-top:16px">
+      <span class="section-lbl" style="color:var(--violet)">✍️ Escritura</span>
+      <div class="phrase-en" id="tEn"></div>
+      <span class="section-lbl" style="color:var(--pron)">🗣️ Pronunciación</span>
+      <div class="phrase-pron" id="tPron"></div>
+      <span class="section-lbl" style="color:var(--es)">🇪🇸 Tu frase original</span>
+      <div class="phrase-es" id="tEs"></div>
+      <div class="speed-row">
+        <label>🐢 VELOCIDAD</label>
+        <input type="range" id="tSpeedRange" min="0.5" max="1" step="0.05" value="0.7">
+        <span id="tSpeedVal">lento</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-listen" id="tListen">🔊 Escuchar</button>
+        <button class="btn btn-speak" id="tSpeak">🎤 Repetir</button>
+      </div>
+      <div class="feedback" id="tFeedback"></div>
+    </div>
   </div>
 
   <!-- SETTINGS -->
@@ -284,6 +330,7 @@
   <!-- Navbar -->
   <div id="navbar">
     <div class="nav-item active" data-nav="homeScreen"><span class="nico">🏠</span>Ruta</div>
+    <div class="nav-item" data-nav="translateScreen"><span class="nico">🌐</span>Traducir</div>
     <div class="nav-item" data-nav="settingsScreen"><span class="nico">⚙️</span>Ajustes</div>
   </div>
 </div>

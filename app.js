@@ -58,7 +58,7 @@ function refillHeartsIfNewDay() {
 
 /* ---------- Referencias DOM ---------- */
 const $ = id => document.getElementById(id);
-const screens = ['homeScreen','lessonScreen','resultScreen','settingsScreen'];
+const screens = ['homeScreen','routeScreen','lessonScreen','resultScreen','translateScreen','settingsScreen'];
 function showScreen(id) {
   screens.forEach(s => $(s).classList.toggle('active', s === id));
   document.querySelectorAll('.nav-item').forEach(n =>
@@ -336,7 +336,7 @@ function renderPhrase() {
   $('progressFill').style.width = (lesson.idx / d.phrases.length * 100) + '%';
   $('phraseEn').innerHTML = p.en.split(/(\s+)/).map(tok =>
     /^\s+$/.test(tok) || tok === '' ? tok : `<span class="word">${tok}</span>`).join('');
-  $('phrasePr').textContent = '🗣️ ' + buildPron(p.en);
+  $('phrasePr').textContent = buildPron(p.en);
   $('phraseEs').textContent = p.es;
   if (p.tip) { $('tipBox').style.display = 'flex'; $('tipTxt').textContent = p.tip; }
   else $('tipBox').style.display = 'none';
@@ -398,27 +398,28 @@ $('btnSpeak').addEventListener('click', () => {
 function paintWords(res) {
   const spans = $('phraseEn').querySelectorAll('.word');
   res.words.forEach((w, i) => {
-    spans[i].style.background = res.matched[i] ? '#D8F5C0' : '#FFD6D6';
-    spans[i].style.textDecoration = res.matched[i] ? 'none' : 'underline wavy #FF4B4B';
+    spans[i].style.background = res.matched[i] ? 'rgba(61,220,151,.28)' : 'rgba(255,92,122,.28)';
+    spans[i].style.color = res.matched[i] ? '#6CF0B4' : '#FF9CAF';
+    spans[i].style.textDecoration = res.matched[i] ? 'none' : 'underline wavy #FF5C7A';
   });
 }
 
 function showFeedback(res, kind) {
   const fb = $('feedback');
-  fb.className = 'show';
+  fb.className = 'feedback show';
   lesson.tries++;
   const d = CURRICULUM[lesson.day];
 
   if (kind === 'unsupported') {
-    fb.className = 'show bad';
-    fb.innerHTML = `⚠️ <b>Tu navegador no soporta reconocimiento de voz.</b><div id="heardTxt">Usa Chrome o Edge en tu móvil/PC y permite el micrófono. Mientras tanto, escucha y repite en voz alta — tu oído también entrena.</div>`;
+    fb.className = 'feedback show bad';
+    fb.innerHTML = `⚠️ <b>Tu navegador no soporta reconocimiento de voz.</b><div class="heardTxt">Usa Chrome o Edge en tu móvil/PC y permite el micrófono. Mientras tanto, escucha y repite en voz alta — tu oído también entrena.</div>`;
     lesson.awaitingNext = true;
     $('btnContinue').style.display = 'flex';
     return;
   }
   if (kind === 'mic-denied') {
-    fb.className = 'show bad';
-    fb.innerHTML = `🎙️ <b>Necesito permiso de micrófono.</b><div id="heardTxt">Actívalo en el ícono de candado de la barra del navegador y vuelve a intentar.</div>`;
+    fb.className = 'feedback show bad';
+    fb.innerHTML = `🎙️ <b>Necesito permiso de micrófono.</b><div class="heardTxt">Actívalo en el ícono de candado de la barra del navegador y vuelve a intentar.</div>`;
     return;
   }
 
@@ -427,9 +428,9 @@ function showFeedback(res, kind) {
   const heardShort = res.heard.length > 90 ? res.heard.slice(0, 90) + '…' : res.heard;
 
   if (acc >= 0.85) {
-    fb.className = 'show good';
+    fb.className = 'feedback show good';
     const perfect = acc >= 0.999;
-    fb.innerHTML = `${perfect ? '🌟 ¡PERFECTO!' : '✅ ¡Excelente pronunciación!'} <b>${Math.round(acc*100)}%</b><div id="heardTxt">Te escuché: “${heardShort}”</div>`;
+    fb.innerHTML = `${perfect ? '🌟 ¡PERFECTO!' : '✅ ¡Excelente pronunciación!'} <b>${Math.round(acc*100)}%</b><div class="heardTxt">Te escuché: “${heardShort}”</div>`;
     lesson.results.push({ acc, perfect, missed: res.missed });
     lesson.awaitingNext = true;
     $('btnContinue').style.display = 'flex';
@@ -437,8 +438,8 @@ function showFeedback(res, kind) {
     if (perfect) { state.xp += 15; confetti(14); mascotSay('¡Eso sonó hermoso! 🌟'); }
     else { state.xp += 10; mascotSay(pickEncourage()); }
   } else if (acc >= 0.6) {
-    fb.className = 'show mid';
-    fb.innerHTML = `🙂 <b>Buen intento: ${Math.round(acc*100)}%</b><div id="heardTxt">Te escuché: “${heardShort}”<br>Palabras a pulir: <b>${res.missed.join(', ') || '—'}</b></div>`;
+    fb.className = 'feedback show mid';
+    fb.innerHTML = `🙂 <b>Buen intento: ${Math.round(acc*100)}%</b><div class="heardTxt">Te escuché: “${heardShort}”<br>Palabras a pulir: <b>${res.missed.join(', ') || '—'}</b></div>`;
     if (lesson.tries >= 2) {
       lesson.results.push({ acc, perfect: false, missed: res.missed });
       lesson.awaitingNext = true;
@@ -451,8 +452,8 @@ function showFeedback(res, kind) {
       setTimeout(() => speak(d.phrases[lesson.idx].en), 700);
     }
   } else {
-    fb.className = 'show bad';
-    fb.innerHTML = `💪 <b>${Math.round(acc*100)}%</b> — Escucha con calma e inténtalo otra vez.<div id="heardTxt">Te escuché: “${heardShort || '(silencio)'}”</div>`;
+    fb.className = 'feedback show bad';
+    fb.innerHTML = `💪 <b>${Math.round(acc*100)}%</b> — Escucha con calma e inténtalo otra vez.<div class="heardTxt">Te escuché: “${heardShort || '(silencio)'}”</div>`;
     state.hearts = Math.max(0, state.hearts - 1);
     $('heartTxt').textContent = state.hearts;
     if (state.hearts === 0) {
@@ -534,7 +535,9 @@ $('btnReplay').addEventListener('click', () => startLesson(lesson.routeId, ROUTE
    SETTINGS
 ===================================================== */
 $('btnSettings').addEventListener('click', () => {
-  $('setDay').textContent = Math.min(state.day + 1, CURRICULUM.length) + ' / ' + CURRICULUM.length;
+  const rtC = ROUTES.find(r => r.id === 'cotidiano');
+  const stC = state.routes.cotidiano;
+  $('setDay').textContent = Math.min(stC.cur + 1, rtC.lessons.length) + ' / ' + rtC.lessons.length;
   $('setStreak').textContent = state.bestStreak + ' 🔥';
   $('defSpeedSel').value = String(state.settings.defRate);
   showScreen('settingsScreen');
@@ -553,6 +556,140 @@ $('btnReset').addEventListener('click', () => {
     mascotSay('Nueva aventura, desde el Día 1 🐝');
   }
 });
+
+/* =====================================================
+   TRADUCTOR — español -> inglés, con pronunciación y
+   práctica de habla reutilizando el motor de la app
+===================================================== */
+let tCurrent = null; // { en, es }
+
+async function translateToEnglish(text) {
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=es|en`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('network');
+  const data = await res.json();
+  const t = data && data.responseData && data.responseData.translatedText;
+  if (!t) throw new Error('empty');
+  return t;
+}
+
+function updateTSpeedLabel() {
+  const r = parseFloat($('tSpeedRange').value);
+  $('tSpeedVal').textContent = r <= 0.6 ? 'muy lento' : r <= 0.75 ? 'lento' : r <= 0.9 ? 'medio' : 'normal';
+}
+$('tSpeedRange').addEventListener('input', updateTSpeedLabel);
+
+$('btnTranslate').addEventListener('click', async () => {
+  const es = $('esInput').value.trim();
+  if (!es) { mascotSay('Escribe primero una frase en español ✍️'); return; }
+  const btn = $('btnTranslate');
+  btn.disabled = true;
+  btn.textContent = '⏳ Traduciendo...';
+  $('tResult').style.display = 'none';
+  try {
+    const en = await translateToEnglish(es);
+    tCurrent = { en, es };
+    renderTranslation();
+  } catch (e) {
+    mascotSay('No pude traducir ahora mismo. Revisa tu conexión a internet e inténtalo de nuevo 🐝');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔄 Traducir';
+  }
+});
+
+function renderTranslation() {
+  $('tEn').innerHTML = tCurrent.en.split(/(\s+)/).map(tok =>
+    /^\s+$/.test(tok) || tok === '' ? tok : `<span class="word">${tok}</span>`).join('');
+  $('tPron').textContent = buildPron(tCurrent.en);
+  $('tEs').textContent = tCurrent.es;
+  $('tSpeedRange').value = state.settings.defRate;
+  updateTSpeedLabel();
+  const fb = $('tFeedback'); fb.className = 'feedback'; fb.innerHTML = '';
+  $('tSpeak').disabled = false;
+  $('tSpeak').innerHTML = '🎤 Repetir';
+  $('tSpeak').classList.remove('mic-live');
+  $('tResult').style.display = 'block';
+  setTimeout(() => speak(tCurrent.en, parseFloat($('tSpeedRange').value)), 300);
+}
+
+$('tListen').addEventListener('click', () => {
+  if (!tCurrent) return;
+  speak(tCurrent.en, parseFloat($('tSpeedRange').value));
+});
+
+$('tSpeak').addEventListener('click', () => {
+  if (!tCurrent) return;
+  if (!supportedSR()) { showTFeedback(null, 'unsupported'); return; }
+  if (listening) { stopListening(); return; }
+  const btn = $('tSpeak');
+  btn.innerHTML = '🔴 Escuchando...';
+  btn.classList.add('mic-live');
+  mascotSay('Te escucho... habla con calma 🎙️', 5000);
+  startListening(alts => {
+    btn.innerHTML = '🎤 Repetir';
+    btn.classList.remove('mic-live');
+    let best = null, bestAcc = -1;
+    alts.forEach(t => {
+      const s = scoreAttempt(tCurrent.en, t);
+      if (s.acc > bestAcc) { bestAcc = s.acc; best = { ...s, heard: t }; }
+    });
+    showTFeedback(best, 'ok');
+  }, err => {
+    btn.innerHTML = '🎤 Repetir';
+    btn.classList.remove('mic-live');
+    if (err === 'not-allowed' || err === 'service-not-allowed') showTFeedback(null, 'mic-denied');
+    else if (err === 'no-speech') mascotSay('No te escuché. Inténtalo de nuevo, sin prisa 🐢');
+    else if (err === 'unsupported') showTFeedback(null, 'unsupported');
+    else mascotSay('Ocurrió un detalle técnico. Intenta otra vez 🙂');
+  });
+});
+
+function paintTWords(res) {
+  const spans = $('tEn').querySelectorAll('.word');
+  res.words.forEach((w, i) => {
+    spans[i].style.background = res.matched[i] ? 'rgba(61,220,151,.28)' : 'rgba(255,92,122,.28)';
+    spans[i].style.color = res.matched[i] ? '#6CF0B4' : '#FF9CAF';
+    spans[i].style.textDecoration = res.matched[i] ? 'none' : 'underline wavy #FF5C7A';
+  });
+}
+
+function showTFeedback(res, kind) {
+  const fb = $('tFeedback');
+  fb.className = 'feedback show';
+
+  if (kind === 'unsupported') {
+    fb.className = 'feedback show bad';
+    fb.innerHTML = `⚠️ <b>Tu navegador no soporta reconocimiento de voz.</b><div class="heardTxt">Usa Chrome o Edge y permite el micrófono.</div>`;
+    return;
+  }
+  if (kind === 'mic-denied') {
+    fb.className = 'feedback show bad';
+    fb.innerHTML = `🎙️ <b>Necesito permiso de micrófono.</b><div class="heardTxt">Actívalo en el ícono de candado de la barra del navegador y vuelve a intentar.</div>`;
+    return;
+  }
+
+  const acc = res.acc;
+  paintTWords(res);
+  const heardShort = res.heard.length > 90 ? res.heard.slice(0, 90) + '…' : res.heard;
+
+  if (acc >= 0.85) {
+    fb.className = 'feedback show good';
+    const perfect = acc >= 0.999;
+    fb.innerHTML = `${perfect ? '🌟 ¡PERFECTO!' : '✅ ¡Excelente pronunciación!'} <b>${Math.round(acc*100)}%</b><div class="heardTxt">Te escuché: “${heardShort}”</div>`;
+    if (perfect) { state.xp += 10; confetti(10); mascotSay('¡Eso sonó hermoso! 🌟'); }
+    else { state.xp += 6; mascotSay(pickEncourage()); }
+  } else if (acc >= 0.6) {
+    fb.className = 'feedback show mid';
+    fb.innerHTML = `🙂 <b>Buen intento: ${Math.round(acc*100)}%</b><div class="heardTxt">Te escuché: “${heardShort}”<br>Palabras a pulir: <b>${res.missed.join(', ') || '—'}</b></div>`;
+    mascotSay('Casi. Escucha otra vez y fíjate en las palabras en rojo 🐢');
+  } else {
+    fb.className = 'feedback show bad';
+    fb.innerHTML = `💪 <b>${Math.round(acc*100)}%</b> — Escucha con calma e inténtalo otra vez.<div class="heardTxt">Te escuché: “${heardShort || '(silencio)'}”</div>`;
+    mascotSay('Sin problema. Escucha la frase otra vez, lento y claro 🍯');
+  }
+  saveState();
+}
 
 /* ---------- Navegación inferior ---------- */
 document.querySelectorAll('.nav-item').forEach(n => {
